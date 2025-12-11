@@ -1,0 +1,979 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Edit Photo - SBNC Photo Admin (Preview)</title>
+
+    <!-- WA Widget Styles - provides base theme -->
+    <link rel="stylesheet" href="https://sbnewcomers.org/resources/Theme/SantaBarbaraNewcomersClubTheme/widget.css" onerror="">
+
+    <!-- CSS Custom Properties from WA theme -->
+    <style>
+        :root {
+            --wa-primary-color: #2c5aa0;
+            --wa-secondary-color: #d4a800;
+            --wa-text-color: #333;
+            --wa-text-muted: #666;
+            --wa-bg-light: #f5f5f5;
+            --wa-border-color: #ddd;
+            --wa-success-color: #27ae60;
+            --wa-error-color: #e74c3c;
+            --wa-warning-color: #f39c12;
+        }
+
+        * { box-sizing: border-box; }
+
+        body {
+            font-family: inherit;
+            margin: 0;
+            padding: 0;
+            background-color: var(--wa-bg-light);
+            color: var(--wa-text-color);
+            line-height: 1.5;
+        }
+
+        /* Header */
+        .header {
+            background: var(--wa-primary-color);
+            color: white;
+            padding: 15px 20px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+        .header h1 { margin: 0; font-size: 22px; }
+        .header h1 a { color: white; text-decoration: none; }
+        .header .nav { display: flex; gap: 20px; }
+        .header .nav a {
+            color: rgba(255,255,255,0.8);
+            text-decoration: none;
+            padding: 5px 10px;
+            border-radius: 4px;
+        }
+        .header .nav a:hover, .header .nav a.active {
+            color: white;
+            background: rgba(255,255,255,0.2);
+        }
+        .header .nav .badge {
+            background: var(--wa-error-color);
+            color: white;
+            padding: 2px 8px;
+            border-radius: 10px;
+            font-size: 12px;
+            margin-left: 5px;
+        }
+        .user-menu { display: flex; align-items: center; gap: 15px; }
+        .user-menu a { color: rgba(255,255,255,0.8); text-decoration: none; }
+
+        /* Main content */
+        .main-content { padding: 20px; max-width: 1400px; margin: 0 auto; }
+
+        /* Buttons */
+        .btn {
+            padding: 10px 20px;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+            font-size: 14px;
+            font-family: inherit;
+            text-decoration: none;
+            display: inline-block;
+            transition: opacity 0.2s;
+        }
+        .btn:hover { opacity: 0.9; }
+        .btn-primary { background: var(--wa-primary-color); color: white; }
+        .btn-success { background: var(--wa-success-color); color: white; }
+        .btn-danger { background: var(--wa-error-color); color: white; }
+        .btn-secondary { background: var(--wa-secondary-color); color: white; }
+        .btn-small { padding: 6px 12px; font-size: 12px; }
+        .btn-large { padding: 14px 28px; font-size: 16px; }
+
+        /* Editor layout */
+        .editor-nav { display: flex; gap: 10px; margin-bottom: 20px; }
+        .editor-content { display: grid; grid-template-columns: 1fr 320px; gap: 20px; }
+        .editor-main { background: white; border-radius: 8px; padding: 20px; }
+
+        /* Photo container */
+        .photo-container { position: relative; display: inline-block; max-width: 100%; }
+        .main-photo { max-width: 100%; max-height: 500px; border-radius: 8px; }
+
+        /* Face boxes */
+        .face-box {
+            position: absolute;
+            border: 3px solid #00ff00;
+            border-radius: 3px;
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+        .face-box:hover { border-color: #ffff00; box-shadow: 0 0 10px rgba(255,255,0,0.5); }
+        .face-box.selected { border-color: #ff6600; box-shadow: 0 0 15px rgba(255,102,0,0.7); }
+        .face-box.unidentified { border-color: #ff0000; }
+        .face-box.matched { border-color: #ffaa00; }
+        .face-box.confirmed { border-color: #00ff00; }
+        .face-label {
+            position: absolute;
+            bottom: -25px;
+            left: 50%;
+            transform: translateX(-50%);
+            background: rgba(0,0,0,0.8);
+            color: white;
+            padding: 3px 8px;
+            border-radius: 3px;
+            font-size: 11px;
+            white-space: nowrap;
+        }
+
+        /* Face panel */
+        .face-panel {
+            margin-top: 20px;
+            padding: 15px;
+            background: #f8f9fa;
+            border-radius: 8px;
+        }
+        .face-panel h3 { margin: 0 0 15px; }
+        .face-candidates { display: flex; gap: 15px; flex-wrap: wrap; margin-bottom: 15px; }
+        .candidate {
+            background: white;
+            border-radius: 8px;
+            padding: 10px;
+            width: 120px;
+            text-align: center;
+            border: 2px solid #ddd;
+            cursor: pointer;
+        }
+        .candidate.selected { border-color: var(--wa-primary-color); }
+        .candidate img { width: 60px; height: 60px; border-radius: 50%; object-fit: cover; }
+        .candidate .name { font-weight: bold; font-size: 13px; margin-top: 5px; }
+        .candidate .confidence { font-size: 12px; color: #666; }
+        .face-search { margin-bottom: 15px; position: relative; }
+        .face-search input { width: 100%; padding: 10px; border: 1px solid #ddd; border-radius: 5px; }
+        .face-actions { display: flex; gap: 10px; }
+
+        /* Approval actions */
+        .approval-actions { margin-top: 20px; padding-top: 20px; border-top: 1px solid #eee; }
+        .approval-actions h3 { margin: 0 0 15px; font-size: 16px; }
+        .status-options { display: flex; gap: 10px; margin: 15px 0; flex-wrap: wrap; }
+        .status-option {
+            padding: 10px 15px;
+            border: 2px solid #ddd;
+            border-radius: 5px;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            font-size: 14px;
+        }
+        .status-option:hover { border-color: var(--wa-primary-color); }
+        .status-option.selected, .status-option:has(input:checked) {
+            border-color: var(--wa-primary-color);
+            background: #e8f0fe;
+        }
+        .status-option input { display: none; }
+        .action-buttons { display: flex; gap: 10px; margin-top: 20px; }
+
+        /* Sidebar */
+        .editor-sidebar { display: flex; flex-direction: column; gap: 20px; }
+        .info-section { background: white; border-radius: 8px; padding: 15px; }
+        .info-section h3 {
+            margin: 0 0 15px;
+            font-size: 16px;
+            padding-bottom: 10px;
+            border-bottom: 1px solid #eee;
+        }
+        .info-row { display: flex; justify-content: space-between; margin-bottom: 8px; font-size: 14px; }
+        .info-row .label { color: var(--wa-text-muted); }
+        .info-row .value { color: var(--wa-text-color); font-weight: 500; }
+
+        .event-badge {
+            background: #e8f4e8;
+            color: #2d862d;
+            padding: 10px;
+            border-radius: 5px;
+            text-align: center;
+        }
+        .event-confidence { font-size: 12px; color: #666; margin-top: 8px; text-align: center; }
+
+        .face-list { list-style: none; padding: 0; margin: 0; }
+        .face-list li {
+            padding: 8px;
+            margin-bottom: 5px;
+            border-radius: 4px;
+            cursor: pointer;
+            font-size: 13px;
+        }
+        .face-list li:hover { background: #f0f0f0; }
+        .face-list li.confirmed { color: var(--wa-success-color); }
+        .face-list li.matched { color: var(--wa-warning-color); }
+        .face-list li.unidentified { color: var(--wa-error-color); }
+
+        .danger-zone { border: 1px solid #fcc; background: #fff5f5; }
+
+        /* Typeahead controls - same as member interface */
+        .typeahead-container {
+            position: relative;
+        }
+        .typeahead-input {
+            width: 100%;
+            padding: 10px 12px;
+            border: 1px solid var(--wa-border-color);
+            border-radius: 4px;
+            font-size: 14px;
+            font-family: inherit;
+        }
+        .typeahead-input:focus {
+            outline: none;
+            border-color: var(--wa-primary-color);
+            box-shadow: 0 0 0 2px rgba(44, 90, 160, 0.1);
+        }
+        .typeahead-dropdown {
+            display: none;
+            position: absolute;
+            top: 100%;
+            left: 0;
+            right: 0;
+            background: white;
+            border: 1px solid var(--wa-border-color);
+            border-top: none;
+            border-radius: 0 0 4px 4px;
+            max-height: 200px;
+            overflow-y: auto;
+            z-index: 100;
+            box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+        }
+        .typeahead-dropdown.visible {
+            display: block;
+        }
+        .typeahead-item {
+            padding: 10px 12px;
+            cursor: pointer;
+            border-bottom: 1px solid #eee;
+        }
+        .typeahead-item:hover {
+            background: #f0f7ff;
+        }
+        .typeahead-item:last-child {
+            border-bottom: none;
+        }
+        .typeahead-item .item-name {
+            font-weight: 500;
+        }
+        .typeahead-item .item-detail {
+            font-size: 12px;
+            color: var(--wa-text-muted);
+        }
+        .selected-badge {
+            margin-top: 10px;
+            padding: 10px 12px;
+            border-radius: 4px;
+            background: #e8f5e9;
+            color: #2e7d32;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+        .selected-badge.event {
+            background: #e3f2fd;
+            color: #1565c0;
+        }
+        .selected-badge .clear-btn {
+            background: none;
+            border: none;
+            color: var(--wa-error-color);
+            cursor: pointer;
+            font-size: 13px;
+        }
+
+        /* Search dropdown for face panel */
+        .search-dropdown {
+            display: none;
+            position: absolute;
+            top: 100%;
+            left: 0;
+            right: 0;
+            background: white;
+            border: 1px solid var(--wa-border-color);
+            border-radius: 0 0 4px 4px;
+            max-height: 200px;
+            overflow-y: auto;
+            z-index: 100;
+        }
+        .search-dropdown.visible {
+            display: block;
+        }
+
+        @media (max-width: 900px) {
+            .editor-content { grid-template-columns: 1fr; }
+            .status-options { flex-direction: column; }
+        }
+
+        /* Face Recognition Status Banner */
+        .fr-status-banner {
+            padding: 10px 20px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            font-size: 14px;
+        }
+        .fr-status-banner.available {
+            background: #d4edda;
+            border-bottom: 1px solid #c3e6cb;
+            color: #155724;
+        }
+        .fr-status-banner.unavailable {
+            background: #fff3cd;
+            border-bottom: 1px solid #ffc107;
+            color: #856404;
+        }
+        .fr-status-banner.error {
+            background: #f8d7da;
+            border-bottom: 1px solid #f5c6cb;
+            color: #721c24;
+        }
+        .fr-status-banner .status-left {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+        .fr-status-banner .status-icon {
+            font-size: 18px;
+        }
+        .fr-status-banner .status-right {
+            display: flex;
+            align-items: center;
+            gap: 15px;
+        }
+        .fr-toggle {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            cursor: pointer;
+        }
+        .fr-toggle input {
+            width: 18px;
+            height: 18px;
+            cursor: pointer;
+        }
+        .fr-toggle-label {
+            font-size: 13px;
+        }
+        .fr-status-dismiss {
+            background: none;
+            border: none;
+            font-size: 18px;
+            cursor: pointer;
+            opacity: 0.7;
+            padding: 0 5px;
+        }
+        .fr-status-dismiss:hover {
+            opacity: 1;
+        }
+
+        /* Face boxes disabled state */
+        .face-boxes-disabled .face-box {
+            display: none;
+        }
+        .face-boxes-disabled .face-panel {
+            display: none;
+        }
+        .face-boxes-disabled .face-disabled-notice {
+            display: block;
+        }
+        .face-disabled-notice {
+            display: none;
+            margin-top: 20px;
+            padding: 15px;
+            background: #f8f9fa;
+            border-radius: 8px;
+            text-align: center;
+            color: #666;
+        }
+    </style>
+</head>
+<body>
+    <header class="header">
+        <h1><a href="#">SBNC Photo Admin</a></h1>
+        <nav class="nav">
+            <a href="#">Dashboard</a>
+            <a href="#" class="active">Review Queue <span class="badge">24</span></a>
+            <a href="#">Events</a>
+            <a href="#">Presentation</a>
+            <a href="#">Settings</a>
+            <a href="#" target="_blank">View Gallery</a>
+        </nav>
+        <div class="user-menu">
+            <span>admin@sbnewcomers.org</span>
+            <a href="#">Logout</a>
+        </div>
+    </header>
+
+    <!-- Face Recognition Status Banner -->
+    <div id="fr-status-banner" class="fr-status-banner available">
+        <div class="status-left">
+            <span class="status-icon" id="fr-status-icon">&#10003;</span>
+            <span id="fr-status-text">Face Recognition: Available</span>
+        </div>
+        <div class="status-right">
+            <label class="fr-toggle">
+                <input type="checkbox" id="fr-toggle" checked onchange="toggleFaceRecognition()">
+                <span class="fr-toggle-label">Enable face detection</span>
+            </label>
+            <button class="fr-status-dismiss" onclick="dismissFRBanner()" title="Dismiss">&times;</button>
+        </div>
+    </div>
+
+    <main class="main-content">
+        <div class="editor-page">
+            <div class="editor-nav">
+                <a href="#" class="btn">&larr; Previous</a>
+                <a href="#" class="btn">Back to Queue</a>
+                <a href="#" class="btn">Next &rarr;</a>
+                <span style="margin-left: auto; color: #888; font-size: 13px;">
+                    Keyboard: A=Approve, R=Reject, Arrows=Navigate
+                </span>
+            </div>
+
+            <div class="editor-content">
+                <div class="editor-main">
+                    <div class="photo-container">
+                        <!-- Sample placeholder image -->
+                        <img src="https://picsum.photos/800/600?random=1" alt="Photo to review" class="main-photo" id="main-photo">
+
+                        <!-- Sample face boxes -->
+                        <div class="face-box confirmed" style="top: 20%; left: 15%; width: 12%; height: 20%;">
+                            <span class="face-label">Mary Johnson &#10003;</span>
+                        </div>
+                        <div class="face-box matched" style="top: 22%; left: 45%; width: 10%; height: 18%;">
+                            <span class="face-label">Bob Wilson?</span>
+                        </div>
+                        <div class="face-box unidentified" style="top: 25%; left: 75%; width: 11%; height: 19%;">
+                            <span class="face-label">Unknown</span>
+                        </div>
+                    </div>
+
+                    <!-- Face identification panel -->
+                    <div class="face-panel" id="face-panel">
+                        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 15px;">
+                            <h3 style="margin: 0;">Identify Face</h3>
+                            <button class="btn btn-small btn-primary" onclick="confirmAllFaces()" title="Confirm all suggested matches">Confirm All Suggestions</button>
+                        </div>
+                        <div class="face-candidates">
+                            <div class="candidate selected">
+                                <img src="https://i.pravatar.cc/60?img=1" alt="">
+                                <div class="name">Bob Wilson</div>
+                                <div class="confidence">87% match</div>
+                            </div>
+                            <div class="candidate">
+                                <img src="https://i.pravatar.cc/60?img=2" alt="">
+                                <div class="name">Tom Anderson</div>
+                                <div class="confidence">72% match</div>
+                            </div>
+                            <div class="candidate">
+                                <img src="https://i.pravatar.cc/60?img=3" alt="">
+                                <div class="name">Mike Brown</div>
+                                <div class="confidence">65% match</div>
+                            </div>
+                        </div>
+                        <div class="face-search">
+                            <input type="text" id="member-search" placeholder="Search members by name..." autocomplete="off">
+                            <div id="member-search-results" class="search-dropdown"></div>
+                        </div>
+                        <div class="face-actions">
+                            <button class="btn btn-success">Confirm Identity</button>
+                            <button class="btn btn-secondary">Mark as Guest</button>
+                            <button class="btn" style="background: #888;">Mark Unknown</button>
+                            <button class="btn">Cancel</button>
+                        </div>
+                    </div>
+
+                    <!-- Notice shown when face detection is disabled -->
+                    <div class="face-disabled-notice">
+                        <p><strong>Face Detection Disabled</strong></p>
+                        <p>Face boxes are hidden. Enable face detection in the banner above to identify people in this photo.</p>
+                    </div>
+
+                    <div class="approval-actions">
+                        <h3>Photo Visibility</h3>
+                        <div class="status-options">
+                            <label class="status-option">
+                                <input type="radio" name="visibility" value="awaiting_approval" checked>
+                                <span>&#9203;</span> Keep Pending
+                            </label>
+                            <label class="status-option selected">
+                                <input type="radio" name="visibility" value="members_only">
+                                <span>&#128274;</span> Members Only
+                            </label>
+                            <label class="status-option">
+                                <input type="radio" name="visibility" value="public">
+                                <span>&#127758;</span> Public
+                            </label>
+                            <label class="status-option">
+                                <input type="radio" name="visibility" value="do_not_post">
+                                <span>&#128683;</span> Do Not Post
+                            </label>
+                        </div>
+                        <div class="action-buttons">
+                            <button class="btn btn-success btn-large">Approve & Next</button>
+                            <button class="btn btn-danger">Reject</button>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="editor-sidebar">
+                    <!-- Caption -->
+                    <div class="info-section">
+                        <h3>Caption</h3>
+                        <div style="margin-bottom: 10px;">
+                            <textarea id="photo-caption" class="form-control" rows="2" placeholder="Optional caption for this photo..." style="width: 100%; padding: 10px; border: 1px solid #ddd; border-radius: 4px; font-family: inherit; font-size: 14px; resize: vertical;">Happy Hikers enjoying the view at Rattlesnake Canyon</textarea>
+                        </div>
+                        <div style="display: flex; justify-content: space-between; align-items: center;">
+                            <small style="color: #666;">Shown when "Show captions" is enabled in widget</small>
+                            <button class="btn btn-small btn-success" onclick="saveCaption()">Save</button>
+                        </div>
+                    </div>
+
+                    <div class="info-section">
+                        <h3>Photo Details</h3>
+                        <div class="info-row">
+                            <span class="label">Original File</span>
+                            <span class="value">IMG_4521.jpg</span>
+                        </div>
+                        <div class="info-row">
+                            <span class="label">Photo Date</span>
+                            <span class="value">Nov 15, 2025 2:34 PM</span>
+                        </div>
+                        <div class="info-row">
+                            <span class="label">Location</span>
+                            <span class="value">34.4208, -119.6982</span>
+                        </div>
+                        <div class="info-row">
+                            <span class="label">Camera</span>
+                            <span class="value">iPhone 15 Pro</span>
+                        </div>
+                        <div class="info-row">
+                            <span class="label">Size</span>
+                            <span class="value">4032 x 3024</span>
+                        </div>
+                        <div class="info-row">
+                            <span class="label">Submitted Via</span>
+                            <span class="value">Web Upload</span>
+                        </div>
+                    </div>
+
+                    <!-- Submitter Section with Typeahead -->
+                    <div class="info-section">
+                        <h3>Submitter</h3>
+                        <div id="submitter-display">
+                            <div style="display: flex; justify-content: space-between; align-items: center;">
+                                <div>
+                                    <div style="font-weight: 500;">Jane Smith</div>
+                                    <div style="font-size: 12px; color: #666;">jane.smith@email.com</div>
+                                </div>
+                                <button class="btn btn-small" onclick="showSubmitterSearch()">Change</button>
+                            </div>
+                        </div>
+                        <div id="submitter-search-section" style="display: none;">
+                            <div class="typeahead-container">
+                                <input type="text" id="submitter-search" class="typeahead-input" placeholder="Search member name..." autocomplete="off">
+                                <div id="submitter-suggestions" class="typeahead-dropdown"></div>
+                            </div>
+                            <div id="submitter-selected" class="selected-badge" style="display: none;">
+                                <span id="submitter-selected-text"></span>
+                                <button type="button" onclick="clearSubmitter()" class="clear-btn">Change</button>
+                            </div>
+                            <div style="margin-top: 10px; display: flex; gap: 8px;">
+                                <button class="btn btn-small btn-success" onclick="saveSubmitter()">Save</button>
+                                <button class="btn btn-small" onclick="cancelSubmitterChange()">Cancel</button>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Event Section with Typeahead -->
+                    <div class="info-section">
+                        <h3>Event</h3>
+                        <div id="event-display">
+                            <div class="event-badge">
+                                Happy Hikers - Rattlesnake Canyon
+                                <br><small>Nov 15, 2025</small>
+                            </div>
+                            <div class="event-confidence">
+                                Match: 95% (GPS + Date)
+                            </div>
+                            <button class="btn btn-small" style="margin-top: 10px; width: 100%;" onclick="showEventSearch()">Change Event</button>
+                        </div>
+                        <div id="event-search-section" style="display: none;">
+                            <div class="typeahead-container">
+                                <input type="text" id="event-search" class="typeahead-input" placeholder="Search event name or date..." autocomplete="off">
+                                <div id="event-suggestions" class="typeahead-dropdown"></div>
+                            </div>
+                            <div id="event-selected" class="selected-badge event" style="display: none;">
+                                <span id="event-selected-text"></span>
+                                <button type="button" onclick="clearEvent()" class="clear-btn">Change</button>
+                            </div>
+                            <div style="margin-top: 10px;">
+                                <label style="display: flex; align-items: center; gap: 8px; font-size: 13px; color: #666; cursor: pointer;">
+                                    <input type="checkbox" id="no-event-checkbox"> No event / Unassigned
+                                </label>
+                            </div>
+                            <div style="margin-top: 10px; display: flex; gap: 8px;">
+                                <button class="btn btn-small btn-success" onclick="saveEvent()">Save</button>
+                                <button class="btn btn-small" onclick="cancelEventChange()">Cancel</button>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="info-section">
+                        <h3>Faces (3)</h3>
+                        <ul class="face-list">
+                            <li class="confirmed">Mary Johnson &#10003;</li>
+                            <li class="matched">Bob Wilson ?</li>
+                            <li class="unidentified">Unknown</li>
+                        </ul>
+                        <button class="btn btn-small" style="margin-top: 10px; width: 100%;">Re-detect Faces</button>
+                    </div>
+
+                    <div class="info-section">
+                        <h3>Export to WA</h3>
+                        <p style="font-size: 13px; color: #666; margin: 0 0 10px;">
+                            Export path:<br>
+                            <code style="font-size: 12px;">Pictures/Fall_25/Happy_Hikers/...</code>
+                        </p>
+                        <button class="btn btn-primary btn-small" style="width: 100%;">Export to WA Files</button>
+                    </div>
+
+                    <div class="info-section danger-zone">
+                        <h3>Danger Zone</h3>
+                        <button class="btn btn-danger btn-small" style="width: 100%;">Delete Permanently</button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </main>
+
+    <script>
+        // Sample data for demo
+        const sampleMembers = [
+            { id: '1', name: 'Jane Smith', email: 'jane.smith@email.com' },
+            { id: '2', name: 'John Doe', email: 'john.doe@email.com' },
+            { id: '3', name: 'Mary Johnson', email: 'mary.j@email.com' },
+            { id: '4', name: 'Bob Wilson', email: 'bob.wilson@email.com' },
+            { id: '5', name: 'Sarah Davis', email: 'sarah.d@email.com' },
+            { id: '6', name: 'Tom Anderson', email: 'tom.a@email.com' },
+            { id: '7', name: 'Lisa Brown', email: 'lisa.brown@email.com' },
+        ];
+
+        const sampleEvents = [
+            { id: '101', name: 'Happy Hikers - Rattlesnake Canyon', date: 'Nov 15, 2025' },
+            { id: '102', name: 'Wine Club - Fall Tasting', date: 'Nov 12, 2025' },
+            { id: '103', name: 'Golf Group - Monthly Tournament', date: 'Nov 10, 2025' },
+            { id: '104', name: 'Book Club - November Meeting', date: 'Nov 8, 2025' },
+            { id: '105', name: 'Arts Committee - Gallery Tour', date: 'Nov 5, 2025' },
+            { id: '106', name: 'Happy Hikers - Seven Falls', date: 'Nov 1, 2025' },
+        ];
+
+        // Make status options work
+        document.querySelectorAll('.status-option').forEach(option => {
+            option.addEventListener('click', function() {
+                document.querySelectorAll('.status-option').forEach(o => o.classList.remove('selected'));
+                this.classList.add('selected');
+                this.querySelector('input').checked = true;
+            });
+        });
+
+        // Make face boxes clickable
+        document.querySelectorAll('.face-box').forEach(box => {
+            box.addEventListener('click', function() {
+                document.querySelectorAll('.face-box').forEach(b => b.classList.remove('selected'));
+                this.classList.add('selected');
+            });
+        });
+
+        // Make candidates clickable
+        document.querySelectorAll('.candidate').forEach(c => {
+            c.addEventListener('click', function() {
+                document.querySelectorAll('.candidate').forEach(x => x.classList.remove('selected'));
+                this.classList.add('selected');
+            });
+        });
+
+        // Confirm All Faces function
+        function confirmAllFaces() {
+            if (confirm('Confirm all suggested face matches? This will accept the top match for each unconfirmed face.')) {
+                alert('All face suggestions confirmed!');
+                // In real implementation, would POST to server
+            }
+        }
+
+        // Save caption
+        function saveCaption() {
+            const caption = document.getElementById('photo-caption').value;
+            // In real implementation, would POST to server
+            alert('Caption saved!');
+        }
+
+        // ========== SUBMITTER TYPEAHEAD ==========
+        let selectedSubmitterId = null;
+
+        function showSubmitterSearch() {
+            document.getElementById('submitter-display').style.display = 'none';
+            document.getElementById('submitter-search-section').style.display = 'block';
+            document.getElementById('submitter-search').focus();
+        }
+
+        function cancelSubmitterChange() {
+            document.getElementById('submitter-display').style.display = 'block';
+            document.getElementById('submitter-search-section').style.display = 'none';
+            document.getElementById('submitter-search').value = '';
+            document.getElementById('submitter-suggestions').classList.remove('visible');
+            document.getElementById('submitter-selected').style.display = 'none';
+            selectedSubmitterId = null;
+        }
+
+        function selectSubmitter(id, name, email) {
+            selectedSubmitterId = id;
+            document.getElementById('submitter-search').style.display = 'none';
+            document.getElementById('submitter-selected').style.display = 'flex';
+            document.getElementById('submitter-selected-text').textContent = name + ' (' + email + ')';
+            document.getElementById('submitter-suggestions').classList.remove('visible');
+        }
+
+        function clearSubmitter() {
+            selectedSubmitterId = null;
+            document.getElementById('submitter-search').style.display = 'block';
+            document.getElementById('submitter-search').value = '';
+            document.getElementById('submitter-selected').style.display = 'none';
+            document.getElementById('submitter-search').focus();
+        }
+
+        function saveSubmitter() {
+            if (!selectedSubmitterId) {
+                alert('Please select a member');
+                return;
+            }
+            const member = sampleMembers.find(m => m.id === selectedSubmitterId);
+            // Update display
+            document.querySelector('#submitter-display > div > div:first-child > div:first-child').textContent = member.name;
+            document.querySelector('#submitter-display > div > div:first-child > div:last-child').textContent = member.email;
+            cancelSubmitterChange();
+            alert('Submitter updated!');
+        }
+
+        // Submitter search input handler
+        document.getElementById('submitter-search').addEventListener('input', function() {
+            const query = this.value.toLowerCase().trim();
+            const dropdown = document.getElementById('submitter-suggestions');
+
+            if (query.length < 2) {
+                dropdown.classList.remove('visible');
+                return;
+            }
+
+            const matches = sampleMembers.filter(m =>
+                m.name.toLowerCase().includes(query) || m.email.toLowerCase().includes(query)
+            );
+
+            if (matches.length === 0) {
+                dropdown.innerHTML = '<div class="typeahead-item" style="color: #888;">No members found</div>';
+            } else {
+                dropdown.innerHTML = matches.map(m => `
+                    <div class="typeahead-item" onclick="selectSubmitter('${m.id}', '${m.name}', '${m.email}')">
+                        <div class="item-name">${m.name}</div>
+                        <div class="item-detail">${m.email}</div>
+                    </div>
+                `).join('');
+            }
+            dropdown.classList.add('visible');
+        });
+
+        // ========== EVENT TYPEAHEAD ==========
+        let selectedEventId = null;
+
+        function showEventSearch() {
+            document.getElementById('event-display').style.display = 'none';
+            document.getElementById('event-search-section').style.display = 'block';
+            document.getElementById('event-search').focus();
+        }
+
+        function cancelEventChange() {
+            document.getElementById('event-display').style.display = 'block';
+            document.getElementById('event-search-section').style.display = 'none';
+            document.getElementById('event-search').value = '';
+            document.getElementById('event-suggestions').classList.remove('visible');
+            document.getElementById('event-selected').style.display = 'none';
+            document.getElementById('no-event-checkbox').checked = false;
+            selectedEventId = null;
+        }
+
+        function selectEvent(id, name, date) {
+            selectedEventId = id;
+            document.getElementById('event-search').style.display = 'none';
+            document.getElementById('event-selected').style.display = 'flex';
+            document.getElementById('event-selected-text').textContent = name + ' (' + date + ')';
+            document.getElementById('event-suggestions').classList.remove('visible');
+            document.getElementById('no-event-checkbox').checked = false;
+        }
+
+        function clearEvent() {
+            selectedEventId = null;
+            document.getElementById('event-search').style.display = 'block';
+            document.getElementById('event-search').value = '';
+            document.getElementById('event-selected').style.display = 'none';
+            document.getElementById('event-search').focus();
+        }
+
+        function saveEvent() {
+            const noEvent = document.getElementById('no-event-checkbox').checked;
+            if (!selectedEventId && !noEvent) {
+                alert('Please select an event or check "No event"');
+                return;
+            }
+
+            if (noEvent) {
+                document.querySelector('#event-display .event-badge').innerHTML = '<em style="color: #888;">No event assigned</em>';
+                document.querySelector('#event-display .event-confidence').textContent = '';
+            } else {
+                const event = sampleEvents.find(e => e.id === selectedEventId);
+                document.querySelector('#event-display .event-badge').innerHTML = event.name + '<br><small>' + event.date + '</small>';
+                document.querySelector('#event-display .event-confidence').textContent = 'Manually assigned';
+            }
+            cancelEventChange();
+            alert('Event updated!');
+        }
+
+        // Event search input handler
+        document.getElementById('event-search').addEventListener('input', function() {
+            const query = this.value.toLowerCase().trim();
+            const dropdown = document.getElementById('event-suggestions');
+
+            if (query.length < 2) {
+                dropdown.classList.remove('visible');
+                return;
+            }
+
+            const matches = sampleEvents.filter(e =>
+                e.name.toLowerCase().includes(query) || e.date.toLowerCase().includes(query)
+            );
+
+            if (matches.length === 0) {
+                dropdown.innerHTML = '<div class="typeahead-item" style="color: #888;">No events found</div>';
+            } else {
+                dropdown.innerHTML = matches.map(e => `
+                    <div class="typeahead-item" onclick="selectEvent('${e.id}', '${e.name}', '${e.date}')">
+                        <div class="item-name">${e.name}</div>
+                        <div class="item-detail">${e.date}</div>
+                    </div>
+                `).join('');
+            }
+            dropdown.classList.add('visible');
+        });
+
+        // No event checkbox handler
+        document.getElementById('no-event-checkbox').addEventListener('change', function() {
+            if (this.checked) {
+                document.getElementById('event-search').style.display = 'none';
+                document.getElementById('event-selected').style.display = 'none';
+                selectedEventId = null;
+            } else {
+                document.getElementById('event-search').style.display = 'block';
+            }
+        });
+
+        // Hide dropdowns when clicking outside
+        document.addEventListener('click', function(e) {
+            if (!e.target.closest('#submitter-search-section')) {
+                document.getElementById('submitter-suggestions').classList.remove('visible');
+            }
+            if (!e.target.closest('#event-search-section')) {
+                document.getElementById('event-suggestions').classList.remove('visible');
+            }
+        });
+
+        // ========== FACE RECOGNITION STATUS ==========
+        let faceRecognitionEnabled = true;
+        let faceRecognitionAvailable = true; // Will be set by server
+
+        function toggleFaceRecognition() {
+            faceRecognitionEnabled = document.getElementById('fr-toggle').checked;
+            const editorMain = document.querySelector('.editor-main');
+
+            if (faceRecognitionEnabled && faceRecognitionAvailable) {
+                editorMain.classList.remove('face-boxes-disabled');
+            } else {
+                editorMain.classList.add('face-boxes-disabled');
+            }
+
+            // Save preference to localStorage
+            localStorage.setItem('frEnabled', faceRecognitionEnabled);
+        }
+
+        function dismissFRBanner() {
+            document.getElementById('fr-status-banner').style.display = 'none';
+            // Remember dismissal for this session
+            sessionStorage.setItem('frBannerDismissed', 'true');
+        }
+
+        function updateFRStatus(available, errorMessage) {
+            faceRecognitionAvailable = available;
+            const banner = document.getElementById('fr-status-banner');
+            const icon = document.getElementById('fr-status-icon');
+            const text = document.getElementById('fr-status-text');
+            const toggle = document.getElementById('fr-toggle');
+
+            if (available) {
+                banner.className = 'fr-status-banner available';
+                icon.innerHTML = '&#10003;';
+                text.textContent = 'Face Recognition: Available';
+                toggle.disabled = false;
+            } else {
+                banner.className = 'fr-status-banner error';
+                icon.innerHTML = '&#9888;';
+                text.textContent = 'Face Recognition: Unavailable - ' + (errorMessage || 'Service down');
+                toggle.disabled = true;
+                toggle.checked = false;
+                faceRecognitionEnabled = false;
+                document.querySelector('.editor-main').classList.add('face-boxes-disabled');
+            }
+
+            // Show banner if it was hidden and status changed
+            if (!available && sessionStorage.getItem('frBannerDismissed') !== 'true') {
+                banner.style.display = 'flex';
+            }
+        }
+
+        function checkFRHealth() {
+            // In production, this would call the API
+            fetch('/api/health')
+                .then(response => response.json())
+                .then(data => {
+                    if (data.face_recognition) {
+                        updateFRStatus(data.face_recognition.available, data.face_recognition.error);
+                    }
+                })
+                .catch(err => {
+                    // API unreachable - assume unavailable
+                    updateFRStatus(false, 'Cannot connect to service');
+                });
+        }
+
+        // Initialize face recognition state
+        document.addEventListener('DOMContentLoaded', function() {
+            // Restore user preference
+            const savedPref = localStorage.getItem('frEnabled');
+            if (savedPref !== null) {
+                faceRecognitionEnabled = savedPref === 'true';
+                document.getElementById('fr-toggle').checked = faceRecognitionEnabled;
+                if (!faceRecognitionEnabled) {
+                    document.querySelector('.editor-main').classList.add('face-boxes-disabled');
+                }
+            }
+
+            // Check health status on load (commented out for preview)
+            // checkFRHealth();
+            // setInterval(checkFRHealth, 60000); // Check every minute
+        });
+
+        // Demo: Simulate unavailable state (uncomment to test)
+        // setTimeout(() => updateFRStatus(false, 'Service not responding'), 3000);
+    </script>
+</body>
+</html>

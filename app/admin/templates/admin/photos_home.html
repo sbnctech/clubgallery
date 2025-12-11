@@ -1,0 +1,287 @@
+{% extends "admin/base_minimal.html" %}
+
+{% block title %}Photo Editor - SBNC{% endblock %}
+
+{% block content %}
+<div class="editor-home">
+    <div class="page-header">
+        <h1>Photo Editor</h1>
+        <p>Review, approve, and tag photos for the SBNC gallery.</p>
+    </div>
+
+    <!-- Quick Stats -->
+    <div class="stats-row">
+        <div class="stat-card priority">
+            <div class="stat-number">{{ stats.awaiting_approval or 0 }}</div>
+            <div class="stat-label">Awaiting Review</div>
+            <a href="{{ url_for('admin.review_queue', status='awaiting_approval') }}" class="stat-action">
+                Review Now &rarr;
+            </a>
+        </div>
+        <div class="stat-card">
+            <div class="stat-number">{{ stats.unidentified_faces or 0 }}</div>
+            <div class="stat-label">Unidentified Faces</div>
+        </div>
+        <div class="stat-card">
+            <div class="stat-number">{{ stats.members_only or 0 }}</div>
+            <div class="stat-label">Members Only</div>
+        </div>
+        <div class="stat-card">
+            <div class="stat-number">{{ stats.public or 0 }}</div>
+            <div class="stat-label">Public</div>
+        </div>
+    </div>
+
+    <!-- Main Actions -->
+    <div class="action-cards">
+        <a href="{{ url_for('admin.reviewer_dashboard') }}" class="action-card">
+            <div class="action-icon">📋</div>
+            <h3>Review Photos</h3>
+            <p>Review photos with pre-processed event matches and face detection. Quick approve/reject.</p>
+            {% if stats.awaiting_approval %}
+            <span class="badge">{{ stats.awaiting_approval }} pending</span>
+            {% endif %}
+        </a>
+
+        <a href="{{ url_for('admin.review_queue', status='members_only') }}" class="action-card">
+            <div class="action-icon">👥</div>
+            <h3>Identify Faces</h3>
+            <p>Tag members in photos to help them find pictures of themselves.</p>
+            {% if stats.unidentified_faces %}
+            <span class="badge">{{ stats.unidentified_faces }} unidentified</span>
+            {% endif %}
+        </a>
+
+        <a href="{{ url_for('gallery.gallery_page') }}" target="_blank" class="action-card">
+            <div class="action-icon">🖼️</div>
+            <h3>View Gallery</h3>
+            <p>See the public gallery as members see it.</p>
+        </a>
+    </div>
+
+    <!-- Recent Activity -->
+    {% if recent_photos %}
+    <div class="recent-section">
+        <h2>Recent Photos</h2>
+        <div class="recent-grid">
+            {% for photo in recent_photos %}
+            <a href="{{ url_for('admin.photo_editor', photo_id=photo.id) }}" class="recent-item">
+                <img src="/photos/thumbs/{{ photo.thumb_path }}" alt="">
+                <div class="recent-overlay">
+                    <span class="status status-{{ photo.status }}">{{ photo.status | replace('_', ' ') }}</span>
+                </div>
+            </a>
+            {% endfor %}
+        </div>
+    </div>
+    {% endif %}
+
+    <!-- Processing Status -->
+    {% if stats.queue %}
+    <div class="processing-section">
+        <h2>Processing Queue</h2>
+        <div class="processing-stats">
+            <span><strong>{{ stats.queue.pending or 0 }}</strong> pending</span>
+            <span><strong>{{ stats.queue.processing or 0 }}</strong> processing</span>
+            <span><strong>{{ stats.queue.completed or 0 }}</strong> completed today</span>
+            {% if stats.queue.failed %}
+            <span class="failed"><strong>{{ stats.queue.failed }}</strong> failed</span>
+            {% endif %}
+        </div>
+    </div>
+    {% endif %}
+</div>
+
+<style>
+.editor-home {
+    max-width: 1000px;
+    margin: 0 auto;
+}
+
+.page-header {
+    margin-bottom: 30px;
+}
+
+.page-header h1 {
+    margin: 0 0 8px;
+    color: #333;
+    font-size: 28px;
+}
+
+.page-header p {
+    margin: 0;
+    color: #666;
+    font-size: 16px;
+}
+
+.stats-row {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+    gap: 15px;
+    margin-bottom: 30px;
+}
+
+.stat-card {
+    background: white;
+    border-radius: 8px;
+    padding: 20px;
+    text-align: center;
+    box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+}
+
+.stat-card.priority {
+    background: linear-gradient(135deg, #2c5aa0, #1e3d6f);
+    color: white;
+}
+
+.stat-card.priority .stat-label {
+    color: rgba(255,255,255,0.8);
+}
+
+.stat-card.priority .stat-action {
+    color: white;
+}
+
+.stat-number {
+    font-size: 36px;
+    font-weight: bold;
+    color: #2c5aa0;
+}
+
+.stat-card.priority .stat-number {
+    color: white;
+}
+
+.stat-label {
+    color: #666;
+    font-size: 14px;
+    margin-top: 5px;
+}
+
+.stat-action {
+    display: inline-block;
+    margin-top: 10px;
+    color: #2c5aa0;
+    text-decoration: none;
+    font-weight: 500;
+}
+
+.action-cards {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+    gap: 20px;
+    margin-bottom: 40px;
+}
+
+.action-card {
+    background: white;
+    border-radius: 8px;
+    padding: 25px;
+    text-decoration: none;
+    color: inherit;
+    box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+    transition: transform 0.2s, box-shadow 0.2s;
+    position: relative;
+}
+
+.action-card:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+}
+
+.action-icon {
+    font-size: 32px;
+    margin-bottom: 12px;
+}
+
+.action-card h3 {
+    margin: 0 0 8px;
+    color: #333;
+    font-size: 18px;
+}
+
+.action-card p {
+    margin: 0;
+    color: #666;
+    font-size: 14px;
+    line-height: 1.5;
+}
+
+.action-card .badge {
+    position: absolute;
+    top: 15px;
+    right: 15px;
+    background: #e74c3c;
+    color: white;
+    padding: 4px 10px;
+    border-radius: 12px;
+    font-size: 12px;
+    font-weight: 500;
+}
+
+.recent-section, .processing-section {
+    background: white;
+    border-radius: 8px;
+    padding: 20px;
+    margin-bottom: 20px;
+    box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+}
+
+.recent-section h2, .processing-section h2 {
+    margin: 0 0 15px;
+    font-size: 18px;
+    color: #333;
+}
+
+.recent-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(100px, 1fr));
+    gap: 10px;
+}
+
+.recent-item {
+    position: relative;
+    aspect-ratio: 1;
+    border-radius: 5px;
+    overflow: hidden;
+}
+
+.recent-item img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+}
+
+.recent-overlay {
+    position: absolute;
+    bottom: 0;
+    left: 0;
+    right: 0;
+    padding: 5px;
+    background: linear-gradient(transparent, rgba(0,0,0,0.7));
+}
+
+.recent-overlay .status {
+    font-size: 10px;
+    padding: 2px 6px;
+    border-radius: 3px;
+    color: white;
+}
+
+.status-awaiting_approval { background: #f39c12; }
+.status-members_only { background: #3498db; }
+.status-public { background: #27ae60; }
+.status-do_not_post { background: #e74c3c; }
+
+.processing-stats {
+    display: flex;
+    gap: 20px;
+    flex-wrap: wrap;
+    color: #666;
+}
+
+.processing-stats .failed {
+    color: #e74c3c;
+}
+</style>
+{% endblock %}

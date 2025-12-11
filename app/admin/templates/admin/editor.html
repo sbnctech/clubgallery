@@ -1,0 +1,355 @@
+{% extends "admin/base.html" %}
+
+{% block title %}Edit Photo - SBNC Photo Admin{% endblock %}
+
+{% block content %}
+<div class="editor-page">
+    <div class="editor-nav">
+        {% if prev_id %}
+        <a href="{{ url_for('admin.photo_editor', photo_id=prev_id) }}" class="btn">&larr; Previous</a>
+        {% endif %}
+        <a href="{{ url_for('admin.review_queue') }}" class="btn">Back to Queue</a>
+        {% if next_id %}
+        <a href="{{ url_for('admin.photo_editor', photo_id=next_id) }}" class="btn">Next &rarr;</a>
+        {% endif %}
+    </div>
+
+    <div class="editor-content">
+        <div class="editor-main">
+            <div class="photo-container">
+                <img src="/photos/display/{{ photo.display_path }}" alt="" class="main-photo" id="main-photo">
+
+                {% for face in photo.faces %}
+                <div class="face-box {% if face.confirmed %}confirmed{% elif face.matched_member_id %}matched{% else %}unidentified{% endif %}"
+                     data-face-id="{{ face.id }}"
+                     style="top: {{ (face.box_top / photo.height * 100) }}%;
+                            left: {{ (face.box_left / photo.width * 100) }}%;
+                            width: {{ ((face.box_right - face.box_left) / photo.width * 100) }}%;
+                            height: {{ ((face.box_bottom - face.box_top) / photo.height * 100) }}%;"
+                     onclick="selectFace({{ face.id }})">
+                    <span class="face-label">
+                        {% if face.confirmed and face.is_guest %}
+                            Guest
+                        {% elif face.confirmed and face.confirmed_member_id %}
+                            {{ face.matched_name }} &#10003;
+                        {% elif face.matched_member_id %}
+                            {{ face.matched_name }}?
+                        {% else %}
+                            Unknown
+                        {% endif %}
+                    </span>
+                </div>
+                {% endfor %}
+            </div>
+
+            <div class="face-panel" id="face-panel" style="display: none;">
+                <h3>Identify Face</h3>
+                <div class="face-candidates" id="face-candidates"></div>
+                <div class="face-search">
+                    <input type="text" id="member-search" placeholder="Search members...">
+                    <div class="search-results" id="search-results"></div>
+                </div>
+                <div class="face-actions">
+                    <button class="btn btn-primary" onclick="confirmFace()">Confirm</button>
+                    <button class="btn btn-secondary" onclick="markAsGuest()">Mark as Guest</button>
+                    <button class="btn" onclick="closeFacePanel()">Cancel</button>
+                </div>
+            </div>
+
+            <div class="approval-actions">
+                <h3>Photo Visibility</h3>
+                <div class="status-options">
+                    <label class="status-option {% if photo.status == 'awaiting_approval' %}selected{% endif %}">
+                        <input type="radio" name="visibility" value="awaiting_approval" {% if photo.status == 'awaiting_approval' %}checked{% endif %}>
+                        <span class="status-icon">&#9203;</span> Keep Pending
+                    </label>
+                    <label class="status-option {% if photo.status == 'members_only' %}selected{% endif %}">
+                        <input type="radio" name="visibility" value="members_only" {% if photo.status == 'members_only' %}checked{% endif %}>
+                        <span class="status-icon">&#128274;</span> Members Only
+                    </label>
+                    <label class="status-option {% if photo.status == 'public' %}selected{% endif %}">
+                        <input type="radio" name="visibility" value="public" {% if photo.status == 'public' %}checked{% endif %}>
+                        <span class="status-icon">&#127758;</span> Public
+                    </label>
+                    <label class="status-option {% if photo.status == 'do_not_post' %}selected{% endif %}">
+                        <input type="radio" name="visibility" value="do_not_post" {% if photo.status == 'do_not_post' %}checked{% endif %}>
+                        <span class="status-icon">&#128683;</span> Do Not Post
+                    </label>
+                </div>
+                <div class="action-buttons">
+                    <button class="btn btn-success btn-large" onclick="approvePhoto()">Approve & Next</button>
+                    <button class="btn btn-danger" onclick="rejectPhoto()">Reject</button>
+                </div>
+            </div>
+        </div>
+
+        <div class="editor-sidebar">
+            <div class="info-section">
+                <h3>Photo Details</h3>
+                <div class="info-row">
+                    <span class="label">Submitted</span>
+                    <span class="value">{{ photo.submitted_at[:16] if photo.submitted_at else 'Unknown' }}</span>
+                </div>
+                <div class="info-row">
+                    <span class="label">Via</span>
+                    <span class="value">{{ photo.submitted_via or 'Unknown' }}</span>
+                </div>
+                <div class="info-row">
+                    <span class="label">Photo Date</span>
+                    <span class="value">{{ photo.taken_at[:16] if photo.taken_at else 'Not available' }}</span>
+                </div>
+                {% if photo.gps_lat and photo.gps_lon %}
+                <div class="info-row">
+                    <span class="label">Location</span>
+                    <span class="value">{{ "%.4f"|format(photo.gps_lat) }}, {{ "%.4f"|format(photo.gps_lon) }}</span>
+                </div>
+                {% endif %}
+                <div class="info-row">
+                    <span class="label">Camera</span>
+                    <span class="value">{{ photo.camera_make or '' }} {{ photo.camera_model or 'Unknown' }}</span>
+                </div>
+                <div class="info-row">
+                    <span class="label">Size</span>
+                    <span class="value">{{ photo.width }}x{{ photo.height }}</span>
+                </div>
+            </div>
+
+            <div class="info-section">
+                <h3>Event</h3>
+                {% if event %}
+                <div class="event-badge">
+                    {{ event.name }}
+                    <br><small>{{ event.start_date[:10] if event.start_date else '' }}</small>
+                </div>
+                <div class="event-confidence">
+                    Match: {{ "%.0f"|format((photo.event_match_confidence or 0) * 100) }}%
+                    ({{ photo.event_match_method or 'unknown' }})
+                </div>
+                {% else %}
+                <p class="no-event">No event matched</p>
+                {% endif %}
+                <button class="btn btn-small" onclick="changeEvent()">Change Event</button>
+            </div>
+
+            <div class="info-section">
+                <h3>Faces ({{ photo.faces|length }})</h3>
+                <ul class="face-list">
+                    {% for face in photo.faces %}
+                    <li class="{% if face.confirmed %}confirmed{% elif face.matched_member_id %}matched{% else %}unidentified{% endif %}"
+                        onclick="selectFace({{ face.id }})">
+                        {% if face.confirmed and face.is_guest %}
+                            Guest
+                        {% elif face.matched_name %}
+                            {{ face.matched_name }}
+                            {% if face.confirmed %}&#10003;{% else %}?{% endif %}
+                        {% else %}
+                            Unknown
+                        {% endif %}
+                    </li>
+                    {% endfor %}
+                </ul>
+                <button class="btn btn-small" onclick="reprocessFaces()">Re-detect Faces</button>
+            </div>
+
+            <div class="info-section danger-zone">
+                <h3>Danger Zone</h3>
+                <button class="btn btn-danger btn-small" onclick="deletePhoto()">Delete Permanently</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+const photoId = '{{ photo.id }}';
+const faces = {{ photo.faces|tojson }};
+let selectedFaceId = null;
+let selectedMemberId = null;
+
+function selectFace(faceId) {
+    selectedFaceId = faceId;
+    selectedMemberId = null;
+
+    const face = faces.find(f => f.id === faceId);
+    if (!face) return;
+
+    // Show face panel
+    document.getElementById('face-panel').style.display = 'block';
+
+    // Populate candidates
+    const candidatesHtml = (face.candidates || []).map(c => `
+        <div class="candidate ${selectedMemberId === c.member_id ? 'selected' : ''}"
+             onclick="selectCandidate('${c.member_id}')">
+            <img src="${c.profile_photo_url || '/static/default-avatar.png'}" alt="">
+            <div class="candidate-info">
+                <div class="name">${c.display_name}</div>
+                <div class="confidence">${c.confidence.toFixed(0)}% match</div>
+            </div>
+        </div>
+    `).join('');
+
+    document.getElementById('face-candidates').innerHTML = candidatesHtml || '<p>No candidates found</p>';
+
+    // Highlight selected face
+    document.querySelectorAll('.face-box').forEach(el => el.classList.remove('selected'));
+    document.querySelector(`.face-box[data-face-id="${faceId}"]`).classList.add('selected');
+}
+
+function selectCandidate(memberId) {
+    selectedMemberId = memberId;
+    document.querySelectorAll('.candidate').forEach(el => el.classList.remove('selected'));
+    event.target.closest('.candidate').classList.add('selected');
+}
+
+function closeFacePanel() {
+    document.getElementById('face-panel').style.display = 'none';
+    selectedFaceId = null;
+    selectedMemberId = null;
+    document.querySelectorAll('.face-box').forEach(el => el.classList.remove('selected'));
+}
+
+function confirmFace() {
+    if (!selectedFaceId || !selectedMemberId) {
+        alert('Please select a member');
+        return;
+    }
+
+    const formData = new FormData();
+    formData.append('face_id', selectedFaceId);
+    formData.append('member_id', selectedMemberId);
+
+    fetch(`/admin/photo/${photoId}/face`, { method: 'POST', body: formData })
+        .then(r => r.json())
+        .then(data => {
+            if (data.success) location.reload();
+            else alert('Error: ' + data.error);
+        });
+}
+
+function markAsGuest() {
+    if (!selectedFaceId) return;
+
+    const formData = new FormData();
+    formData.append('face_id', selectedFaceId);
+    formData.append('is_guest', 'true');
+
+    fetch(`/admin/photo/${photoId}/face`, { method: 'POST', body: formData })
+        .then(r => r.json())
+        .then(data => {
+            if (data.success) location.reload();
+            else alert('Error: ' + data.error);
+        });
+}
+
+// Member search
+let searchTimeout;
+document.getElementById('member-search').addEventListener('input', function() {
+    clearTimeout(searchTimeout);
+    const query = this.value.trim();
+    if (query.length < 2) {
+        document.getElementById('search-results').innerHTML = '';
+        return;
+    }
+
+    searchTimeout = setTimeout(() => {
+        fetch(`/admin/members/search?q=${encodeURIComponent(query)}`)
+            .then(r => r.json())
+            .then(members => {
+                const html = members.map(m => `
+                    <div class="search-result" onclick="selectSearchResult('${m.id}', '${m.display_name}')">
+                        <img src="${m.profile_photo_url || '/static/default-avatar.png'}" alt="">
+                        ${m.display_name}
+                    </div>
+                `).join('');
+                document.getElementById('search-results').innerHTML = html;
+            });
+    }, 300);
+});
+
+function selectSearchResult(memberId, name) {
+    selectedMemberId = memberId;
+    document.getElementById('member-search').value = name;
+    document.getElementById('search-results').innerHTML = '';
+}
+
+function approvePhoto() {
+    const visibility = document.querySelector('input[name="visibility"]:checked').value;
+    if (visibility === 'do_not_post') {
+        rejectPhoto();
+        return;
+    }
+
+    const formData = new FormData();
+    formData.append('visibility', visibility);
+
+    fetch(`/admin/photo/${photoId}/approve`, { method: 'POST', body: formData })
+        .then(r => r.json())
+        .then(data => {
+            if (data.success) {
+                {% if next_id %}
+                window.location.href = '{{ url_for("admin.photo_editor", photo_id=next_id) }}';
+                {% else %}
+                window.location.href = '{{ url_for("admin.review_queue") }}';
+                {% endif %}
+            }
+        });
+}
+
+function rejectPhoto() {
+    if (!confirm('Reject this photo?')) return;
+
+    fetch(`/admin/photo/${photoId}/reject`, { method: 'POST' })
+        .then(r => r.json())
+        .then(data => {
+            if (data.success) {
+                {% if next_id %}
+                window.location.href = '{{ url_for("admin.photo_editor", photo_id=next_id) }}';
+                {% else %}
+                window.location.href = '{{ url_for("admin.review_queue") }}';
+                {% endif %}
+            }
+        });
+}
+
+function reprocessFaces() {
+    fetch(`/admin/photo/${photoId}/reprocess`, { method: 'POST' })
+        .then(r => r.json())
+        .then(data => {
+            alert(`Detected ${data.faces_detected} faces`);
+            location.reload();
+        });
+}
+
+function deletePhoto() {
+    if (!confirm('Permanently delete this photo? This cannot be undone.')) return;
+
+    fetch(`/admin/photo/${photoId}/delete`, { method: 'POST' })
+        .then(r => r.json())
+        .then(data => {
+            if (data.success) {
+                window.location.href = '{{ url_for("admin.review_queue") }}';
+            }
+        });
+}
+
+function changeEvent() {
+    alert('Event change UI - TODO');
+}
+
+// Keyboard shortcuts
+document.addEventListener('keydown', function(e) {
+    if (e.target.tagName === 'INPUT') return;
+
+    switch(e.key) {
+        case 'a': case 'A': approvePhoto(); break;
+        case 'r': case 'R': rejectPhoto(); break;
+        case 'ArrowRight':
+            {% if next_id %}window.location.href = '{{ url_for("admin.photo_editor", photo_id=next_id) }}';{% endif %}
+            break;
+        case 'ArrowLeft':
+            {% if prev_id %}window.location.href = '{{ url_for("admin.photo_editor", photo_id=prev_id) }}';{% endif %}
+            break;
+        case 'Escape': closeFacePanel(); break;
+    }
+});
+</script>
+{% endblock %}

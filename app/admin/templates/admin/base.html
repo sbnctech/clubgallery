@@ -1,0 +1,67 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>{% block title %}SBNC Photo Admin{% endblock %}</title>
+
+    <!-- WA Widget Styles - provides base theme -->
+    <link rel="stylesheet" href="https://sbnewcomers.org/resources/Theme/SantaBarbaraNewcomersClubTheme/widget.css" onerror="">
+
+    <!-- CSS Custom Properties from WA theme -->
+    <style>
+        :root {
+            --wa-primary-color: #2c5aa0;
+            --wa-secondary-color: #d4a800;
+            --wa-text-color: #333;
+            --wa-text-muted: #666;
+            --wa-bg-light: #f5f5f5;
+            --wa-border-color: #ddd;
+            --wa-success-color: #27ae60;
+            --wa-error-color: #e74c3c;
+            --wa-warning-color: #f39c12;
+        }
+    </style>
+
+    <link rel="stylesheet" href="{{ url_for('admin.static', filename='css/admin.css') }}">
+    {% block extra_css %}{% endblock %}
+</head>
+<body>
+    <header class="header">
+        <h1><a href="{{ url_for('admin.dashboard') }}">SBNC Photo Admin</a></h1>
+        <nav class="nav">
+            <a href="{{ url_for('admin.dashboard') }}" class="{% if request.endpoint == 'admin.dashboard' %}active{% endif %}">Dashboard</a>
+            <a href="{{ url_for('admin.review_queue') }}" class="{% if request.endpoint == 'admin.review_queue' %}active{% endif %}">
+                Review Queue
+                {% if pending_count %}<span class="badge">{{ pending_count }}</span>{% endif %}
+            </a>
+            <a href="{{ url_for('admin.list_events') }}" class="{% if request.endpoint == 'admin.list_events' %}active{% endif %}">Events</a>
+            <a href="{{ url_for('admin.presentation') }}" class="{% if request.endpoint == 'admin.presentation' %}active{% endif %}">Presentation</a>
+            <a href="{{ url_for('admin.settings') }}" class="{% if request.endpoint == 'admin.settings' %}active{% endif %}">Settings</a>
+            <a href="{{ url_for('gallery.gallery_page') }}" target="_blank">View Gallery</a>
+        </nav>
+        <div class="user-menu">
+            <span>{{ current_user.email }}</span>
+            <a href="{{ url_for('auth.logout') }}">Logout</a>
+        </div>
+    </header>
+
+    <main class="main-content">
+        {% with messages = get_flashed_messages(with_categories=true) %}
+            {% if messages %}
+                <div class="flash-messages">
+                    {% for category, message in messages %}
+                        <div class="flash flash-{{ category }}">{{ message }}</div>
+                    {% endfor %}
+                </div>
+            {% endif %}
+        {% endwith %}
+
+        {% block content %}{% endblock %}
+    </main>
+
+    <script src="https://cdn.jsdelivr.net/npm/jquery@3/dist/jquery.min.js"></script>
+    <script src="{{ url_for('admin.static', filename='js/admin.js') }}"></script>
+    {% block extra_js %}{% endblock %}
+</body>
+</html>

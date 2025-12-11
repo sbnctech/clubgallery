@@ -1,0 +1,246 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>SBNC Photo Gallery - Preview</title>
+    <style>
+        * { box-sizing: border-box; }
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Arial, sans-serif;
+            margin: 0;
+            padding: 20px;
+            background: #f5f5f5;
+        }
+        .preview-container {
+            max-width: 1200px;
+            margin: 0 auto;
+            background: white;
+            border-radius: 8px;
+            padding: 20px;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+        }
+        .config-bar {
+            display: flex;
+            gap: 15px;
+            flex-wrap: wrap;
+            padding: 12px 15px;
+            background: #fff3cd;
+            border: 1px dashed #ffc107;
+            border-radius: 6px;
+            margin-bottom: 20px;
+            align-items: center;
+            font-size: 12px;
+        }
+        .config-bar::before {
+            content: "TEST CONTROLS:";
+            font-weight: 700;
+            color: #856404;
+            font-size: 10px;
+        }
+        .config-bar label {
+            font-size: 12px;
+            font-weight: 500;
+            color: #666;
+        }
+        .config-bar select, .config-bar input[type="checkbox"] {
+            margin-left: 6px;
+        }
+        .config-bar select {
+            font-size: 12px;
+            padding: 3px 6px;
+        }
+        .config-bar button {
+            padding: 6px 12px;
+            background: #6c757d;
+            color: white;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+            font-size: 12px;
+        }
+        .config-bar button:hover {
+            background: #5a6268;
+        }
+    </style>
+</head>
+<body>
+    <div class="preview-container">
+        <div class="config-bar">
+            <label>
+                Access:
+                <select id="config-access" onchange="updateConfig()">
+                    <option value="members" selected>Members</option>
+                    <option value="public">Public</option>
+                </select>
+            </label>
+            <label>
+                <input type="checkbox" id="config-filters" checked onchange="updateConfig()">
+                Filters
+            </label>
+            <label>
+                <input type="checkbox" id="config-header" checked onchange="updateConfig()">
+                Header
+            </label>
+            <label>
+                Layout:
+                <select id="config-layout" onchange="updateConfig()">
+                    <option value="grid">Grid</option>
+                    <option value="masonry">Masonry</option>
+                </select>
+            </label>
+            <button onclick="reloadWidget()">Reload</button>
+        </div>
+
+        <!-- Widget Container -->
+        <div id="sbnc-gallery"></div>
+    </div>
+
+    <!-- jQuery -->
+    <script src="https://cdn.jsdelivr.net/npm/jquery@3/dist/jquery.min.js"></script>
+
+    <!-- nanogallery2 -->
+    <link href="https://cdn.jsdelivr.net/npm/nanogallery2@3/dist/css/nanogallery2.min.css" rel="stylesheet">
+    <script src="https://cdn.jsdelivr.net/npm/nanogallery2@3/dist/jquery.nanogallery2.min.js"></script>
+
+    <!-- Select2 -->
+    <link href="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/css/select2.min.css" rel="stylesheet">
+    <script src="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/js/select2.min.js"></script>
+
+    <script>
+        // Configuration
+        window.SBNC_GALLERY_CONFIG = {
+            container: '#sbnc-gallery',
+            apiBase: '',  // Will use mock data
+            showFilters: true,
+            showHeader: true,
+            access: 'members',
+            layout: 'grid'
+        };
+
+        function updateConfig() {
+            window.SBNC_GALLERY_CONFIG.access = document.getElementById('config-access').value;
+            window.SBNC_GALLERY_CONFIG.showFilters = document.getElementById('config-filters').checked;
+            window.SBNC_GALLERY_CONFIG.showHeader = document.getElementById('config-header').checked;
+            window.SBNC_GALLERY_CONFIG.layout = document.getElementById('config-layout').value;
+        }
+
+        function reloadWidget() {
+            location.reload();
+        }
+
+        // ===== MOCK DATA FOR LOCAL PREVIEW =====
+        // This simulates API responses for testing without a backend
+
+        const MOCK_EVENTS = [
+            { id: 1, name: 'Holiday Party 2024', date: '2024-12-15', activity: 'Social', photoCount: 45 },
+            { id: 2, name: 'Wine Tasting at Los Olivos', date: '2024-12-08', activity: 'Wine Club', photoCount: 32 },
+            { id: 3, name: 'Happy Hikers - Rattlesnake Canyon', date: '2024-12-01', activity: 'Happy Hikers', photoCount: 28 },
+            { id: 4, name: 'New Member Orientation', date: '2024-11-20', activity: 'Membership', photoCount: 18 },
+            { id: 5, name: 'Golf Tournament', date: '2024-11-15', activity: 'Golf', photoCount: 52 },
+            { id: 6, name: 'Book Club Meeting', date: '2024-11-10', activity: 'Book Club', photoCount: 12 },
+            { id: 7, name: 'Beach Volleyball', date: '2024-10-28', activity: 'Sports', photoCount: 24 },
+            { id: 8, name: 'Art Gallery Tour', date: '2024-10-20', activity: 'Arts', photoCount: 35 }
+        ];
+
+        const MOCK_ACTIVITIES = [
+            { id: 'Happy Hikers', name: 'Happy Hikers', eventCount: 8, photoCount: 156 },
+            { id: 'Wine Club', name: 'Wine Club', eventCount: 6, photoCount: 98 },
+            { id: 'Golf', name: 'Golf', eventCount: 5, photoCount: 124 },
+            { id: 'Social', name: 'Social Events', eventCount: 12, photoCount: 234 },
+            { id: 'Book Club', name: 'Book Club', eventCount: 4, photoCount: 45 }
+        ];
+
+        const MOCK_MEMBERS = [
+            { id: 1, name: 'John Smith', photoCount: 23, thumb: 'https://i.pravatar.cc/100?u=1' },
+            { id: 2, name: 'Jane Doe', photoCount: 45, thumb: 'https://i.pravatar.cc/100?u=2' },
+            { id: 3, name: 'Bob Wilson', photoCount: 18, thumb: 'https://i.pravatar.cc/100?u=3' },
+            { id: 4, name: 'Mary Johnson', photoCount: 32, thumb: 'https://i.pravatar.cc/100?u=4' },
+            { id: 5, name: 'Tom Brown', photoCount: 27, thumb: 'https://i.pravatar.cc/100?u=5' }
+        ];
+
+        // Generate mock photo albums for nanogallery2
+        function getMockGalleryData() {
+            return MOCK_EVENTS.map(event => ({
+                id: event.id,
+                title: event.name,
+                description: `${event.date} - ${event.photoCount} photos`,
+                kind: 'album',
+                albumID: event.id,
+                thumbnailImageURL: `https://picsum.photos/seed/event${event.id}/400/300`
+            }));
+        }
+
+        // Generate mock photos for an event
+        function getMockEventPhotos(eventId) {
+            const event = MOCK_EVENTS.find(e => e.id == eventId);
+            if (!event) return [];
+
+            const photos = [];
+            const count = event.photoCount;
+            for (let i = 1; i <= Math.min(count, 20); i++) {
+                photos.push({
+                    id: `${eventId}-${i}`,
+                    src: `https://picsum.photos/seed/photo${eventId}-${i}/1200/800`,
+                    srct: `https://picsum.photos/seed/photo${eventId}-${i}/400/300`,
+                    title: i % 3 === 0 ? `John Smith, Jane Doe` : (i % 2 === 0 ? `Bob Wilson` : '')
+                });
+            }
+            return photos;
+        }
+    </script>
+
+    <!-- Load the widget -->
+    <script src="static/sbnc-gallery-widget.js"></script>
+
+    <script>
+        // Override fetch for local preview with mock data
+        const originalFetch = window.fetch;
+        window.fetch = function(url, options) {
+            // Intercept API calls and return mock data
+            if (typeof url === 'string') {
+                if (url.includes('/api/events.json')) {
+                    return Promise.resolve({
+                        ok: true,
+                        json: () => Promise.resolve(MOCK_EVENTS)
+                    });
+                }
+                if (url.includes('/api/activities.json')) {
+                    return Promise.resolve({
+                        ok: true,
+                        json: () => Promise.resolve(MOCK_ACTIVITIES)
+                    });
+                }
+                if (url.includes('/api/members.json')) {
+                    return Promise.resolve({
+                        ok: true,
+                        json: () => Promise.resolve(MOCK_MEMBERS)
+                    });
+                }
+                if (url.includes('/api/gallery.json')) {
+                    // Check if filtering by event
+                    const params = new URLSearchParams(url.split('?')[1] || '');
+                    const eventId = params.get('event');
+                    if (eventId) {
+                        return Promise.resolve({
+                            ok: true,
+                            json: () => Promise.resolve(getMockEventPhotos(eventId))
+                        });
+                    }
+                    return Promise.resolve({
+                        ok: true,
+                        json: () => Promise.resolve(getMockGalleryData())
+                    });
+                }
+                if (url.includes('/api/config.json')) {
+                    return Promise.resolve({
+                        ok: true,
+                        json: () => Promise.resolve({})
+                    });
+                }
+            }
+            return originalFetch.apply(this, arguments);
+        };
+    </script>
+</body>
+</html>

@@ -1,0 +1,658 @@
+{% extends "admin/base_minimal.html" %}
+
+{% block title %}Photo Reviewer - SBNC{% endblock %}
+
+{% block extra_css %}
+<style>
+.reviewer-dashboard {
+    max-width: 1200px;
+    margin: 0 auto;
+}
+
+.page-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 20px;
+}
+
+.page-header h1 {
+    margin: 0;
+    font-size: 24px;
+    color: #333;
+}
+
+.queue-stats {
+    display: flex;
+    gap: 15px;
+}
+
+.queue-stat {
+    background: white;
+    padding: 8px 16px;
+    border-radius: 20px;
+    font-size: 14px;
+    box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+}
+
+.queue-stat.pending {
+    background: #fff3cd;
+    color: #856404;
+}
+
+.queue-stat strong {
+    font-weight: 600;
+}
+
+/* Filter tabs */
+.filter-tabs {
+    display: flex;
+    gap: 5px;
+    margin-bottom: 20px;
+    background: white;
+    padding: 8px;
+    border-radius: 8px;
+    box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+}
+
+.filter-tab {
+    padding: 8px 16px;
+    border: none;
+    background: transparent;
+    border-radius: 5px;
+    cursor: pointer;
+    font-size: 14px;
+    color: #666;
+    text-decoration: none;
+}
+
+.filter-tab:hover {
+    background: #f0f2f5;
+}
+
+.filter-tab.active {
+    background: #2c5aa0;
+    color: white;
+}
+
+.filter-tab .count {
+    background: rgba(0,0,0,0.1);
+    padding: 2px 8px;
+    border-radius: 10px;
+    font-size: 12px;
+    margin-left: 5px;
+}
+
+.filter-tab.active .count {
+    background: rgba(255,255,255,0.2);
+}
+
+/* Photo cards */
+.photo-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(320px, 1fr));
+    gap: 20px;
+}
+
+.photo-card {
+    background: white;
+    border-radius: 10px;
+    overflow: hidden;
+    box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+    transition: transform 0.2s, box-shadow 0.2s;
+}
+
+.photo-card:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 4px 16px rgba(0,0,0,0.15);
+}
+
+.photo-thumb-container {
+    position: relative;
+    aspect-ratio: 4/3;
+    background: #f0f0f0;
+}
+
+.photo-thumb {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+}
+
+.photo-badges {
+    position: absolute;
+    top: 10px;
+    left: 10px;
+    display: flex;
+    flex-direction: column;
+    gap: 5px;
+}
+
+.badge {
+    padding: 4px 10px;
+    border-radius: 12px;
+    font-size: 11px;
+    font-weight: 600;
+    display: inline-flex;
+    align-items: center;
+    gap: 4px;
+}
+
+.badge-event {
+    background: rgba(39, 174, 96, 0.9);
+    color: white;
+}
+
+.badge-event.low-confidence {
+    background: rgba(241, 196, 15, 0.9);
+    color: #333;
+}
+
+.badge-event.no-match {
+    background: rgba(231, 76, 60, 0.9);
+    color: white;
+}
+
+.badge-faces {
+    background: rgba(52, 152, 219, 0.9);
+    color: white;
+}
+
+.badge-faces.needs-id {
+    background: rgba(155, 89, 182, 0.9);
+}
+
+.photo-info {
+    padding: 15px;
+}
+
+.photo-event {
+    font-weight: 600;
+    font-size: 15px;
+    color: #333;
+    margin-bottom: 5px;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
+
+.photo-event .confidence {
+    font-size: 11px;
+    font-weight: normal;
+    color: #888;
+    background: #f0f0f0;
+    padding: 2px 6px;
+    border-radius: 3px;
+}
+
+.photo-meta {
+    font-size: 13px;
+    color: #666;
+    margin-bottom: 10px;
+}
+
+.photo-meta .item {
+    display: flex;
+    align-items: center;
+    gap: 5px;
+    margin-bottom: 3px;
+}
+
+.photo-meta .icon {
+    width: 16px;
+    text-align: center;
+}
+
+/* Face preview */
+.faces-preview {
+    display: flex;
+    gap: 5px;
+    margin: 10px 0;
+    flex-wrap: wrap;
+}
+
+.face-chip {
+    display: inline-flex;
+    align-items: center;
+    gap: 5px;
+    background: #f0f2f5;
+    padding: 4px 10px 4px 4px;
+    border-radius: 15px;
+    font-size: 12px;
+}
+
+.face-chip img {
+    width: 22px;
+    height: 22px;
+    border-radius: 50%;
+    object-fit: cover;
+}
+
+.face-chip.identified {
+    background: #d4edda;
+    color: #155724;
+}
+
+.face-chip.unidentified {
+    background: #fff3cd;
+    color: #856404;
+}
+
+.face-chip.guest {
+    background: #e2e3e5;
+    color: #383d41;
+}
+
+/* Actions */
+.photo-actions {
+    display: flex;
+    gap: 8px;
+    padding: 0 15px 15px;
+}
+
+.action-btn {
+    flex: 1;
+    padding: 10px;
+    border: none;
+    border-radius: 6px;
+    font-size: 13px;
+    font-weight: 500;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 5px;
+    transition: background 0.2s;
+}
+
+.action-btn.approve {
+    background: #27ae60;
+    color: white;
+}
+
+.action-btn.approve:hover {
+    background: #219a52;
+}
+
+.action-btn.reject {
+    background: #e74c3c;
+    color: white;
+}
+
+.action-btn.reject:hover {
+    background: #c0392b;
+}
+
+.action-btn.edit {
+    background: #3498db;
+    color: white;
+}
+
+.action-btn.edit:hover {
+    background: #2980b9;
+}
+
+.action-btn.secondary {
+    background: #f0f2f5;
+    color: #666;
+}
+
+.action-btn.secondary:hover {
+    background: #e0e3e8;
+}
+
+/* Visibility options */
+.visibility-toggle {
+    display: flex;
+    gap: 5px;
+    margin-bottom: 10px;
+}
+
+.vis-option {
+    flex: 1;
+    padding: 6px;
+    border: 2px solid #ddd;
+    border-radius: 5px;
+    background: white;
+    font-size: 12px;
+    cursor: pointer;
+    text-align: center;
+    transition: all 0.2s;
+}
+
+.vis-option:hover {
+    border-color: #2c5aa0;
+}
+
+.vis-option.selected {
+    border-color: #2c5aa0;
+    background: #e8f0fe;
+}
+
+.vis-option input {
+    display: none;
+}
+
+/* Empty state */
+.empty-state {
+    text-align: center;
+    padding: 60px 20px;
+    color: #888;
+}
+
+.empty-state h3 {
+    margin: 0 0 10px;
+    color: #666;
+}
+
+/* Toast notification */
+.toast {
+    position: fixed;
+    bottom: 20px;
+    right: 20px;
+    padding: 12px 20px;
+    background: #333;
+    color: white;
+    border-radius: 8px;
+    box-shadow: 0 4px 12px rgba(0,0,0,0.2);
+    z-index: 1000;
+    display: none;
+}
+
+.toast.success {
+    background: #27ae60;
+}
+
+.toast.error {
+    background: #e74c3c;
+}
+
+.toast.show {
+    display: block;
+    animation: slideIn 0.3s ease;
+}
+
+@keyframes slideIn {
+    from { transform: translateY(20px); opacity: 0; }
+    to { transform: translateY(0); opacity: 1; }
+}
+
+/* Keyboard shortcuts hint */
+.shortcuts-hint {
+    position: fixed;
+    bottom: 20px;
+    left: 20px;
+    background: white;
+    padding: 10px 15px;
+    border-radius: 8px;
+    box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+    font-size: 12px;
+    color: #666;
+}
+
+.shortcuts-hint kbd {
+    background: #f0f0f0;
+    padding: 2px 6px;
+    border-radius: 3px;
+    font-family: monospace;
+    margin: 0 2px;
+}
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="reviewer-dashboard">
+    <div class="page-header">
+        <h1>Photo Review</h1>
+        <div class="queue-stats">
+            <div class="queue-stat pending">
+                <strong>{{ stats.awaiting_approval }}</strong> awaiting review
+            </div>
+            <div class="queue-stat">
+                <strong>{{ stats.unidentified_faces }}</strong> unidentified faces
+            </div>
+        </div>
+    </div>
+
+    <div class="filter-tabs">
+        <a href="?filter=all" class="filter-tab {% if filter == 'all' %}active{% endif %}">
+            All Pending
+            <span class="count">{{ stats.awaiting_approval }}</span>
+        </a>
+        <a href="?filter=with_event" class="filter-tab {% if filter == 'with_event' %}active{% endif %}">
+            Event Matched
+        </a>
+        <a href="?filter=no_event" class="filter-tab {% if filter == 'no_event' %}active{% endif %}">
+            No Event
+        </a>
+        <a href="?filter=needs_faces" class="filter-tab {% if filter == 'needs_faces' %}active{% endif %}">
+            Needs Face ID
+        </a>
+    </div>
+
+    {% if photos %}
+    <div class="photo-grid">
+        {% for photo in photos %}
+        <div class="photo-card" data-photo-id="{{ photo.id }}">
+            <div class="photo-thumb-container">
+                <a href="{{ url_for('admin.photo_editor', photo_id=photo.id) }}">
+                    <img src="/photos/thumbs/{{ photo.thumb_path }}" alt="" class="photo-thumb">
+                </a>
+                <div class="photo-badges">
+                    {% if photo.event_id %}
+                        {% if photo.event_match_confidence >= 0.8 %}
+                        <span class="badge badge-event">Event Matched</span>
+                        {% else %}
+                        <span class="badge badge-event low-confidence">Event ({{ (photo.event_match_confidence * 100)|int }}%)</span>
+                        {% endif %}
+                    {% else %}
+                    <span class="badge badge-event no-match">No Event</span>
+                    {% endif %}
+
+                    {% if photo.face_count > 0 %}
+                        {% if photo.unidentified_count > 0 %}
+                        <span class="badge badge-faces needs-id">{{ photo.face_count }} faces ({{ photo.unidentified_count }} unknown)</span>
+                        {% else %}
+                        <span class="badge badge-faces">{{ photo.face_count }} faces</span>
+                        {% endif %}
+                    {% endif %}
+                </div>
+            </div>
+
+            <div class="photo-info">
+                <div class="photo-event">
+                    {% if photo.event_name %}
+                        {{ photo.event_name }}
+                        {% if photo.event_match_confidence and photo.event_match_confidence < 0.8 %}
+                        <span class="confidence">{{ (photo.event_match_confidence * 100)|int }}% match</span>
+                        {% endif %}
+                    {% else %}
+                        <span style="color: #999;">No event matched</span>
+                    {% endif %}
+                </div>
+
+                <div class="photo-meta">
+                    {% if photo.taken_at %}
+                    <div class="item">
+                        <span class="icon">📅</span>
+                        {{ photo.taken_at[:16] }}
+                    </div>
+                    {% endif %}
+                    {% if photo.submitter_name %}
+                    <div class="item">
+                        <span class="icon">👤</span>
+                        Submitted by {{ photo.submitter_name }}
+                    </div>
+                    {% endif %}
+                </div>
+
+                {% if photo.faces %}
+                <div class="faces-preview">
+                    {% for face in photo.faces[:5] %}
+                    <span class="face-chip {% if face.confirmed_member_id %}identified{% elif face.matched_member_id %}unidentified{% else %}guest{% endif %}">
+                        {% if face.member_photo %}
+                        <img src="{{ face.member_photo }}" alt="">
+                        {% endif %}
+                        {% if face.confirmed_name %}
+                            {{ face.confirmed_name.split(' ')[0] }}
+                        {% elif face.matched_name %}
+                            {{ face.matched_name.split(' ')[0] }}?
+                        {% else %}
+                            Unknown
+                        {% endif %}
+                    </span>
+                    {% endfor %}
+                    {% if photo.faces|length > 5 %}
+                    <span class="face-chip">+{{ photo.faces|length - 5 }} more</span>
+                    {% endif %}
+                </div>
+                {% endif %}
+
+                <div class="visibility-toggle">
+                    <label class="vis-option selected" data-value="members_only">
+                        <input type="radio" name="visibility_{{ photo.id }}" value="members_only" checked>
+                        Members Only
+                    </label>
+                    <label class="vis-option" data-value="public">
+                        <input type="radio" name="visibility_{{ photo.id }}" value="public">
+                        Public
+                    </label>
+                </div>
+            </div>
+
+            <div class="photo-actions">
+                <button class="action-btn approve" onclick="approvePhoto('{{ photo.id }}')">
+                    ✓ Approve
+                </button>
+                <button class="action-btn reject" onclick="rejectPhoto('{{ photo.id }}')">
+                    ✕ Reject
+                </button>
+                <a href="{{ url_for('admin.photo_editor', photo_id=photo.id) }}" class="action-btn edit">
+                    Edit
+                </a>
+            </div>
+        </div>
+        {% endfor %}
+    </div>
+
+    {% if page < total_pages %}
+    <div style="text-align: center; margin: 30px 0;">
+        <a href="?page={{ page + 1 }}&filter={{ filter }}" class="action-btn secondary" style="display: inline-flex; width: auto; padding: 12px 30px;">
+            Load More
+        </a>
+    </div>
+    {% endif %}
+
+    {% else %}
+    <div class="empty-state">
+        <h3>No photos awaiting review</h3>
+        <p>All caught up! Check back later for new submissions.</p>
+    </div>
+    {% endif %}
+</div>
+
+<div class="toast" id="toast"></div>
+
+<div class="shortcuts-hint">
+    Keyboard: <kbd>A</kbd> Approve &nbsp; <kbd>R</kbd> Reject &nbsp; <kbd>E</kbd> Edit &nbsp; <kbd>→</kbd> Next
+</div>
+
+<script>
+// Visibility toggle
+document.querySelectorAll('.vis-option').forEach(opt => {
+    opt.addEventListener('click', function() {
+        const group = this.closest('.visibility-toggle');
+        group.querySelectorAll('.vis-option').forEach(o => o.classList.remove('selected'));
+        this.classList.add('selected');
+        this.querySelector('input').checked = true;
+    });
+});
+
+// Approve photo
+function approvePhoto(photoId) {
+    const card = document.querySelector(`[data-photo-id="${photoId}"]`);
+    const visibility = card.querySelector('input[type="radio"]:checked').value;
+
+    fetch(`{{ url_for('admin.approve_photo', photo_id='PHOTO_ID') }}`.replace('PHOTO_ID', photoId), {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/x-www-form-urlencoded',
+            'X-Requested-With': 'XMLHttpRequest'
+        },
+        body: `visibility=${visibility}`
+    })
+    .then(r => r.json())
+    .then(data => {
+        if (data.success) {
+            card.style.opacity = '0.5';
+            card.style.transform = 'scale(0.95)';
+            setTimeout(() => card.remove(), 300);
+            showToast('Photo approved', 'success');
+        }
+    });
+}
+
+// Reject photo
+function rejectPhoto(photoId) {
+    if (!confirm('Reject this photo?')) return;
+
+    fetch(`{{ url_for('admin.reject_photo', photo_id='PHOTO_ID') }}`.replace('PHOTO_ID', photoId), {
+        method: 'POST',
+        headers: { 'X-Requested-With': 'XMLHttpRequest' }
+    })
+    .then(r => r.json())
+    .then(data => {
+        if (data.success) {
+            const card = document.querySelector(`[data-photo-id="${photoId}"]`);
+            card.style.opacity = '0.5';
+            setTimeout(() => card.remove(), 300);
+            showToast('Photo rejected', 'success');
+        }
+    });
+}
+
+// Toast notification
+function showToast(message, type) {
+    const toast = document.getElementById('toast');
+    toast.textContent = message;
+    toast.className = `toast ${type} show`;
+    setTimeout(() => toast.classList.remove('show'), 3000);
+}
+
+// Keyboard shortcuts
+let focusedIndex = 0;
+const cards = () => document.querySelectorAll('.photo-card');
+
+document.addEventListener('keydown', function(e) {
+    if (e.target.tagName === 'INPUT') return;
+
+    const allCards = cards();
+    if (allCards.length === 0) return;
+
+    switch(e.key.toLowerCase()) {
+        case 'a':
+            const card = allCards[focusedIndex];
+            if (card) approvePhoto(card.dataset.photoId);
+            break;
+        case 'r':
+            const cardR = allCards[focusedIndex];
+            if (cardR) rejectPhoto(cardR.dataset.photoId);
+            break;
+        case 'e':
+            const cardE = allCards[focusedIndex];
+            if (cardE) {
+                window.location.href = cardE.querySelector('.action-btn.edit').href;
+            }
+            break;
+        case 'arrowright':
+            focusedIndex = Math.min(focusedIndex + 1, allCards.length - 1);
+            allCards[focusedIndex]?.scrollIntoView({ behavior: 'smooth', block: 'center' });
+            break;
+        case 'arrowleft':
+            focusedIndex = Math.max(focusedIndex - 1, 0);
+            allCards[focusedIndex]?.scrollIntoView({ behavior: 'smooth', block: 'center' });
+            break;
+    }
+});
+</script>
+{% endblock %}

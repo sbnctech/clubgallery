@@ -1,0 +1,83 @@
+{% extends "admin/base.html" %}
+
+{% block title %}Dashboard - SBNC Photo Admin{% endblock %}
+
+{% block content %}
+<div class="dashboard">
+    <h2>Dashboard</h2>
+
+    <div class="stats-grid">
+        <div class="stat-card">
+            <div class="stat-number">{{ stats.awaiting_approval or 0 }}</div>
+            <div class="stat-label">Awaiting Approval</div>
+            <a href="{{ url_for('admin.review_queue', status='awaiting_approval') }}" class="stat-link">Review &rarr;</a>
+        </div>
+        <div class="stat-card">
+            <div class="stat-number">{{ stats.unidentified_faces or 0 }}</div>
+            <div class="stat-label">Unidentified Faces</div>
+            <a href="{{ url_for('admin.review_queue', status='awaiting_approval') }}" class="stat-link">Identify &rarr;</a>
+        </div>
+        <div class="stat-card">
+            <div class="stat-number">{{ stats.members_only or 0 }}</div>
+            <div class="stat-label">Members Only</div>
+        </div>
+        <div class="stat-card">
+            <div class="stat-number">{{ stats.public or 0 }}</div>
+            <div class="stat-label">Public</div>
+        </div>
+    </div>
+
+    <div class="dashboard-row">
+        <div class="dashboard-section">
+            <h3>Processing Queue</h3>
+            <table class="data-table">
+                <tr>
+                    <td>Pending</td>
+                    <td>{{ stats.queue.pending or 0 }}</td>
+                </tr>
+                <tr>
+                    <td>Processing</td>
+                    <td>{{ stats.queue.processing or 0 }}</td>
+                </tr>
+                <tr>
+                    <td>Completed (today)</td>
+                    <td>{{ stats.queue.completed or 0 }}</td>
+                </tr>
+                <tr>
+                    <td>Failed</td>
+                    <td>{{ stats.queue.failed or 0 }}</td>
+                </tr>
+            </table>
+            <button class="btn btn-primary" onclick="flashProcess()">
+                Flash Process Now
+            </button>
+        </div>
+
+        <div class="dashboard-section">
+            <h3>Recent Photos</h3>
+            <div class="recent-photos">
+                {% for photo in recent_photos %}
+                <a href="{{ url_for('admin.photo_editor', photo_id=photo.id) }}" class="recent-photo">
+                    <img src="/photos/thumbs/{{ photo.thumb_path }}" alt="">
+                    <div class="recent-photo-info">
+                        <span class="status status-{{ photo.status }}">{{ photo.status }}</span>
+                        {% if photo.event_name %}{{ photo.event_name }}{% endif %}
+                    </div>
+                </a>
+                {% endfor %}
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+function flashProcess() {
+    fetch('{{ url_for("admin.flash_process") }}', { method: 'POST' })
+        .then(r => r.json())
+        .then(data => {
+            alert(`Processed: ${data.processed}, Failed: ${data.failed}`);
+            location.reload();
+        });
+}
+</script>
+{% endblock %}

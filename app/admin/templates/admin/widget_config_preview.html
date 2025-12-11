@@ -1,0 +1,1670 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Photo Gallery Widget Configuration - SBNC</title>
+
+    <!-- WA Widget Styles -->
+    <link rel="stylesheet" href="https://sbnewcomers.org/resources/Theme/SantaBarbaraNewcomersClubTheme/widget.css" onerror="">
+
+    <style>
+        :root {
+            --wa-primary-color: #2c5aa0;
+            --wa-secondary-color: #d4a800;
+            --wa-text-color: #333;
+            --wa-text-muted: #666;
+            --wa-bg-light: #f5f5f5;
+            --wa-border-color: #ddd;
+            --wa-success-color: #27ae60;
+            --wa-error-color: #e74c3c;
+        }
+
+        * { box-sizing: border-box; }
+
+        body {
+            font-family: inherit;
+            margin: 0;
+            padding: 0;
+            background-color: var(--wa-bg-light);
+            color: var(--wa-text-color);
+            line-height: 1.5;
+        }
+
+        /* Header */
+        .header {
+            background: var(--wa-primary-color);
+            color: white;
+            padding: 15px 20px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+        .header h1 { margin: 0; font-size: 22px; }
+        .header h1 a { color: white; text-decoration: none; }
+        .header .nav { display: flex; gap: 20px; }
+        .header .nav a {
+            color: rgba(255,255,255,0.8);
+            text-decoration: none;
+            padding: 5px 10px;
+            border-radius: 4px;
+        }
+        .header .nav a:hover, .header .nav a.active {
+            color: white;
+            background: rgba(255,255,255,0.2);
+        }
+
+        .main-content {
+            padding: 20px;
+            max-width: 1000px;
+            margin: 0 auto;
+        }
+
+        .page-header {
+            margin-bottom: 25px;
+        }
+        .page-header h2 {
+            margin: 0 0 8px;
+            color: var(--wa-primary-color);
+        }
+        .page-header p {
+            margin: 0;
+            color: var(--wa-text-muted);
+        }
+
+        /* Config sections */
+        .config-section {
+            background: white;
+            border-radius: 8px;
+            margin-bottom: 20px;
+            box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+        }
+
+        .config-section-header {
+            padding: 15px 20px;
+            border-bottom: 1px solid #eee;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+        .config-section-header h3 {
+            margin: 0;
+            font-size: 16px;
+            color: var(--wa-text-color);
+        }
+        .config-section-header .section-toggle {
+            color: var(--wa-primary-color);
+            cursor: pointer;
+            font-size: 13px;
+        }
+
+        .config-section-body {
+            padding: 20px;
+        }
+
+        /* Form elements */
+        .form-row {
+            display: grid;
+            grid-template-columns: 200px 1fr;
+            gap: 15px;
+            margin-bottom: 20px;
+            align-items: start;
+        }
+        .form-row:last-child {
+            margin-bottom: 0;
+        }
+
+        .form-label {
+            font-weight: 500;
+            padding-top: 8px;
+        }
+        .form-label small {
+            display: block;
+            font-weight: normal;
+            color: var(--wa-text-muted);
+            font-size: 12px;
+            margin-top: 3px;
+        }
+
+        .form-control {
+            width: 100%;
+            padding: 10px 12px;
+            border: 1px solid var(--wa-border-color);
+            border-radius: 4px;
+            font-size: 14px;
+            font-family: inherit;
+        }
+        .form-control:focus {
+            outline: none;
+            border-color: var(--wa-primary-color);
+            box-shadow: 0 0 0 2px rgba(44, 90, 160, 0.1);
+        }
+
+        select.form-control {
+            background: white;
+            cursor: pointer;
+        }
+
+        .form-control-inline {
+            display: flex;
+            gap: 10px;
+            align-items: center;
+        }
+        .form-control-inline input[type="number"] {
+            width: 80px;
+        }
+        .form-control-inline span {
+            color: var(--wa-text-muted);
+            font-size: 14px;
+        }
+
+        /* Checkbox/Radio groups */
+        .checkbox-group, .radio-group {
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+        }
+        .checkbox-item, .radio-item {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            cursor: pointer;
+        }
+        .checkbox-item input, .radio-item input {
+            width: 18px;
+            height: 18px;
+            cursor: pointer;
+            accent-color: var(--wa-primary-color);
+        }
+
+        /* Inline radio/checkbox */
+        .radio-group.inline, .checkbox-group.inline {
+            flex-direction: row;
+            flex-wrap: wrap;
+            gap: 20px;
+        }
+
+        /* Toggle switch */
+        .toggle-switch {
+            position: relative;
+            width: 50px;
+            height: 26px;
+        }
+        .toggle-switch input {
+            opacity: 0;
+            width: 0;
+            height: 0;
+        }
+        .toggle-slider {
+            position: absolute;
+            cursor: pointer;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background-color: #ccc;
+            transition: 0.3s;
+            border-radius: 26px;
+        }
+        .toggle-slider:before {
+            position: absolute;
+            content: "";
+            height: 20px;
+            width: 20px;
+            left: 3px;
+            bottom: 3px;
+            background-color: white;
+            transition: 0.3s;
+            border-radius: 50%;
+        }
+        .toggle-switch input:checked + .toggle-slider {
+            background-color: var(--wa-primary-color);
+        }
+        .toggle-switch input:checked + .toggle-slider:before {
+            transform: translateX(24px);
+        }
+
+        .toggle-row {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+        }
+        .toggle-label {
+            font-size: 14px;
+        }
+
+        /* Multi-select tags */
+        .tag-select {
+            border: 1px solid var(--wa-border-color);
+            border-radius: 4px;
+            padding: 8px;
+            min-height: 80px;
+        }
+        .tag-select-tags {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 8px;
+            margin-bottom: 8px;
+        }
+        .tag {
+            background: #e3f2fd;
+            color: #1565c0;
+            padding: 4px 10px;
+            border-radius: 15px;
+            font-size: 13px;
+            display: flex;
+            align-items: center;
+            gap: 6px;
+        }
+        .tag .remove {
+            cursor: pointer;
+            font-weight: bold;
+            opacity: 0.7;
+        }
+        .tag .remove:hover {
+            opacity: 1;
+        }
+        .tag-select input {
+            border: none;
+            outline: none;
+            padding: 4px;
+            font-size: 14px;
+            width: 200px;
+        }
+
+        /* Preview panel */
+        .preview-panel {
+            background: #f8f9fa;
+            border: 1px dashed var(--wa-border-color);
+            border-radius: 8px;
+            padding: 20px;
+            text-align: center;
+        }
+        .preview-panel h4 {
+            margin: 0 0 15px;
+            color: var(--wa-text-muted);
+            font-size: 14px;
+        }
+        .preview-grid {
+            display: grid;
+            grid-template-columns: repeat(4, 1fr);
+            gap: 10px;
+            margin-bottom: 15px;
+        }
+        .preview-thumb {
+            aspect-ratio: 1;
+            background: #ddd;
+            border-radius: 4px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: #999;
+            font-size: 24px;
+        }
+
+        /* Embed code */
+        .embed-code {
+            background: #2d2d2d;
+            color: #f8f8f2;
+            padding: 15px;
+            border-radius: 5px;
+            font-family: 'Monaco', 'Menlo', monospace;
+            font-size: 13px;
+            overflow-x: auto;
+            white-space: pre-wrap;
+            word-break: break-all;
+        }
+        .copy-btn {
+            margin-top: 10px;
+        }
+
+        /* Buttons */
+        .btn {
+            padding: 10px 20px;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+            font-size: 14px;
+            font-family: inherit;
+            text-decoration: none;
+            display: inline-block;
+            transition: opacity 0.2s;
+        }
+        .btn:hover { opacity: 0.9; }
+        .btn-primary { background: var(--wa-primary-color); color: white; }
+        .btn-success { background: var(--wa-success-color); color: white; }
+        .btn-secondary { background: #95a5a6; color: white; }
+        .btn-small { padding: 6px 12px; font-size: 13px; }
+
+        /* Action bar */
+        .action-bar {
+            background: white;
+            padding: 15px 20px;
+            border-radius: 8px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+            position: sticky;
+            bottom: 20px;
+        }
+        .action-bar .status {
+            color: var(--wa-text-muted);
+            font-size: 14px;
+        }
+        .action-bar .buttons {
+            display: flex;
+            gap: 10px;
+        }
+
+        /* Info tooltip */
+        .info-icon {
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            width: 16px;
+            height: 16px;
+            background: var(--wa-primary-color);
+            color: white;
+            border-radius: 50%;
+            font-size: 11px;
+            font-weight: bold;
+            font-style: italic;
+            font-family: Georgia, serif;
+            cursor: help;
+            margin-left: 6px;
+            position: relative;
+            vertical-align: middle;
+        }
+        .info-icon:hover .tooltip {
+            display: block;
+        }
+        .tooltip {
+            display: none;
+            position: absolute;
+            bottom: calc(100% + 8px);
+            left: 50%;
+            transform: translateX(-50%);
+            background: #333;
+            color: white;
+            padding: 10px 14px;
+            border-radius: 6px;
+            font-size: 13px;
+            font-weight: normal;
+            font-style: normal;
+            font-family: inherit;
+            line-height: 1.5;
+            width: 280px;
+            text-align: left;
+            z-index: 1000;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.2);
+        }
+        .tooltip::after {
+            content: '';
+            position: absolute;
+            top: 100%;
+            left: 50%;
+            transform: translateX(-50%);
+            border: 6px solid transparent;
+            border-top-color: #333;
+        }
+        /* Position tooltip to right for labels near left edge */
+        .tooltip.right {
+            left: 0;
+            transform: none;
+        }
+        .tooltip.right::after {
+            left: 12px;
+            transform: none;
+        }
+        /* Position tooltip below for items near top of page */
+        .tooltip.below {
+            bottom: auto;
+            top: calc(100% + 8px);
+        }
+        .tooltip.below::after {
+            top: auto;
+            bottom: 100%;
+            border-top-color: transparent;
+            border-bottom-color: #333;
+        }
+
+        /* Compatibility warnings */
+        .compat-warning {
+            background: #fff3cd;
+            border: 1px solid #ffc107;
+            color: #856404;
+            padding: 8px 12px;
+            border-radius: 4px;
+            font-size: 13px;
+            margin-top: 8px;
+            display: none;
+        }
+        .compat-warning.show {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+        .compat-warning::before {
+            content: '⚠️';
+        }
+        .compat-warning.auto-adjusted {
+            background: #d4edda;
+            border-color: #28a745;
+            color: #155724;
+        }
+        .compat-warning.auto-adjusted::before {
+            content: '✓';
+        }
+
+        /* Disabled state */
+        .form-row.disabled {
+            opacity: 0.5;
+            pointer-events: none;
+        }
+        .form-row.disabled .form-label::after {
+            content: ' (disabled)';
+            font-size: 11px;
+            color: #999;
+            font-weight: normal;
+        }
+
+        .option-disabled {
+            opacity: 0.4;
+            pointer-events: none;
+        }
+
+        /* Responsive */
+        @media (max-width: 768px) {
+            .form-row {
+                grid-template-columns: 1fr;
+                gap: 8px;
+            }
+            .form-label {
+                padding-top: 0;
+            }
+            .preview-grid {
+                grid-template-columns: repeat(2, 1fr);
+            }
+            .tooltip {
+                width: 220px;
+            }
+        }
+    </style>
+</head>
+<body>
+    <main class="main-content">
+        <div class="page-header">
+            <h2>Photo Gallery Widget Configuration</h2>
+            <p>Configure how the photo gallery widget appears when embedded on your website pages.</p>
+        </div>
+
+        <!-- Gallery Type Selector -->
+        <div class="config-section" style="background: linear-gradient(135deg, #e3f2fd 0%, #f3e5f5 100%);">
+            <div class="config-section-header">
+                <h3>Gallery Type</h3>
+                <span style="font-size: 13px; color: #666;">Each gallery type has its own configuration</span>
+            </div>
+            <div class="config-section-body">
+                <div class="form-row">
+                    <div class="form-label">
+                        Configure settings for
+                        <span class="info-icon">i<span class="tooltip right below">You can create different configurations for different audiences:<br><br><strong>Public Gallery:</strong> Shown to non-members and search engines. Only displays photos marked "Public".<br><br><strong>Members Gallery:</strong> Shown to logged-in members. Can display members-only photos.<br><br><strong>Admin/Webmaster:</strong> Full access view for site administrators, including pending photos.<br><br>Each has separate settings saved independently.</span></span>
+                    </div>
+                    <div>
+                        <div class="radio-group inline" style="gap: 15px;">
+                            <label class="radio-item" style="padding: 12px 20px; background: white; border-radius: 8px; border: 2px solid #ddd;">
+                                <input type="radio" name="gallery-type" value="public" checked onchange="switchGalleryType('public')">
+                                <span><strong>Public Gallery</strong><br><small style="color: #666;">For visitors & search engines</small></span>
+                            </label>
+                            <label class="radio-item" style="padding: 12px 20px; background: white; border-radius: 8px; border: 2px solid #ddd;">
+                                <input type="radio" name="gallery-type" value="members" onchange="switchGalleryType('members')">
+                                <span><strong>Members Gallery</strong><br><small style="color: #666;">For logged-in members</small></span>
+                            </label>
+                            <label class="radio-item" style="padding: 12px 20px; background: white; border-radius: 8px; border: 2px solid #ddd;">
+                                <input type="radio" name="gallery-type" value="admin" onchange="switchGalleryType('admin')">
+                                <span><strong>Admin View</strong><br><small style="color: #666;">For webmasters</small></span>
+                            </label>
+                        </div>
+                    </div>
+                </div>
+                <div id="gallery-type-note" style="margin-top: 15px; padding: 12px; background: white; border-radius: 6px; font-size: 13px;">
+                    <strong>Public Gallery:</strong> These settings control what non-members see. Only photos marked as "Public" will appear, regardless of other filter settings.
+                </div>
+            </div>
+        </div>
+
+        <!-- Display Settings -->
+        <div class="config-section">
+            <div class="config-section-header">
+                <h3>Display Settings</h3>
+            </div>
+            <div class="config-section-body">
+                <div class="form-row">
+                    <div class="form-label">
+                        Layout
+                        <span class="info-icon">i<span class="tooltip right below"><strong>Grid:</strong> All thumbnails same size, clean uniform look. Best for most pages.<br><br><strong>Masonry:</strong> Photos at original aspect ratios, Pinterest-style layout. Shows more of each photo but less uniform.<br><br><strong>Carousel:</strong> Slideshow format, one photo at a time with navigation arrows. Good for featured sections.<br><br><strong>Featured:</strong> One large hero photo with smaller grid below. Great for homepage highlights.</span></span>
+                    </div>
+                    <div>
+                        <select class="form-control" id="layout">
+                            <option value="grid" selected>Grid (uniform thumbnails)</option>
+                            <option value="masonry">Masonry (variable heights)</option>
+                            <option value="carousel">Carousel (slideshow)</option>
+                            <option value="featured">Featured (1 large + grid)</option>
+                        </select>
+                    </div>
+                </div>
+
+                <div class="form-row" id="columns-row">
+                    <div class="form-label">
+                        Photos per row
+                        <span class="info-icon">i<span class="tooltip right">More columns = smaller thumbnails but more photos visible at once. Fewer columns = larger thumbnails but requires more scrolling.<br><br>On mobile devices, this automatically reduces to 2-3 columns regardless of setting.</span></span>
+                    </div>
+                    <div>
+                        <div class="radio-group inline">
+                            <label class="radio-item"><input type="radio" name="columns" value="3"> 3</label>
+                            <label class="radio-item"><input type="radio" name="columns" value="4" checked> 4</label>
+                            <label class="radio-item"><input type="radio" name="columns" value="5"> 5</label>
+                            <label class="radio-item"><input type="radio" name="columns" value="6"> 6</label>
+                        </div>
+                        <div class="compat-warning" id="columns-warning">
+                            Carousel layout shows one photo at a time - column setting is ignored.
+                        </div>
+                    </div>
+                </div>
+
+                <div class="form-row">
+                    <div class="form-label">
+                        Photos to display
+                        <span class="info-icon">i<span class="tooltip right">The maximum number of photos shown when the widget first loads. More photos means longer initial page load time.<br><br>For homepage widgets, 8-12 is usually ideal. For dedicated gallery pages, you can show more.</span></span>
+                    </div>
+                    <div class="form-control-inline">
+                        <input type="number" class="form-control" value="12" min="4" max="50">
+                        <span>photos</span>
+                    </div>
+                </div>
+
+                <div class="form-row">
+                    <div class="form-label">
+                        Thumbnail size
+                        <span class="info-icon">i<span class="tooltip right">Larger thumbnails look sharper and show more detail, but use more bandwidth and load slower.<br><br><strong>Small (150px):</strong> Fast loading, good for sidebars<br><strong>Medium (250px):</strong> Balanced, recommended for most uses<br><strong>Large (350px):</strong> High quality, best for featured galleries</span></span>
+                    </div>
+                    <div>
+                        <select class="form-control" id="thumb-size">
+                            <option value="small">Small (150px)</option>
+                            <option value="medium" selected>Medium (250px)</option>
+                            <option value="large">Large (350px)</option>
+                        </select>
+                    </div>
+                </div>
+
+                <div class="form-row" id="shape-row">
+                    <div class="form-label">
+                        Thumbnail shape
+                        <span class="info-icon">i<span class="tooltip right"><strong>Square:</strong> All photos cropped to squares. Most uniform look but may crop important parts of photos.<br><br><strong>Landscape (4:3):</strong> Wider thumbnails, good for group photos and scenery.<br><br><strong>Original aspect:</strong> Shows photos at their natural proportions. Best with masonry layout.</span></span>
+                    </div>
+                    <div>
+                        <div class="radio-group inline">
+                            <label class="radio-item"><input type="radio" name="shape" value="square" checked> Square</label>
+                            <label class="radio-item"><input type="radio" name="shape" value="landscape"> Landscape (4:3)</label>
+                            <label class="radio-item"><input type="radio" name="shape" value="original"> Original aspect</label>
+                        </div>
+                        <div class="compat-warning" id="shape-masonry-warning">
+                            Original aspect works best with Masonry layout. Consider switching layout for best results.
+                        </div>
+                        <div class="compat-warning" id="shape-circle-warning">
+                            Circle corners require square thumbnails. Shape will be changed to square.
+                        </div>
+                    </div>
+                </div>
+
+                <div class="form-row" id="corners-row">
+                    <div class="form-label">
+                        Corner style
+                        <span class="info-icon">i<span class="tooltip right">Cosmetic preference only. Rounded corners give a softer, modern look. Square corners are more traditional. Circle works best with square thumbnails for a profile-photo style.</span></span>
+                    </div>
+                    <div>
+                        <div class="radio-group inline">
+                            <label class="radio-item"><input type="radio" name="corners" value="square"> Square</label>
+                            <label class="radio-item"><input type="radio" name="corners" value="rounded" checked> Rounded</label>
+                            <label class="radio-item" id="circle-option"><input type="radio" name="corners" value="circle"> Circle</label>
+                        </div>
+                        <div class="compat-warning" id="corners-warning">
+                            Circle corners look best with square thumbnails.
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Content Options -->
+        <div class="config-section">
+            <div class="config-section-header">
+                <h3>Content Options</h3>
+                <span style="font-size: 13px; color: #666;">What information appears with each photo</span>
+            </div>
+            <div class="config-section-body">
+                <div class="form-row">
+                    <div class="form-label">
+                        Show captions
+                        <span class="info-icon">i<span class="tooltip right">Displays a text overlay when visitors hover over a photo. Captions typically include the event name and date. Useful for context but can clutter the visual appearance.</span></span>
+                    </div>
+                    <div class="toggle-row">
+                        <label class="toggle-switch">
+                            <input type="checkbox" id="show-captions">
+                            <span class="toggle-slider"></span>
+                        </label>
+                        <span class="toggle-label">Display photo captions on hover</span>
+                    </div>
+                </div>
+
+                <div class="form-row">
+                    <div class="form-label">
+                        Show event name
+                        <span class="info-icon">i<span class="tooltip right">Shows the associated event name (e.g., "Happy Hikers - Seven Falls") below or over each thumbnail. Helps visitors understand the context of photos.</span></span>
+                    </div>
+                    <div class="toggle-row">
+                        <label class="toggle-switch">
+                            <input type="checkbox" id="show-event" checked>
+                            <span class="toggle-slider"></span>
+                        </label>
+                        <span class="toggle-label">Display event name with photos</span>
+                    </div>
+                </div>
+
+                <div class="form-row">
+                    <div class="form-label">
+                        Show date
+                        <span class="info-icon">i<span class="tooltip right">Displays when the photo was taken. Useful for visitors to see how recent the photos are. Can be combined with event name or shown separately.</span></span>
+                    </div>
+                    <div class="toggle-row">
+                        <label class="toggle-switch">
+                            <input type="checkbox" id="show-date" checked>
+                            <span class="toggle-slider"></span>
+                        </label>
+                        <span class="toggle-label">Display photo date</span>
+                    </div>
+                </div>
+
+                <div class="form-row">
+                    <div class="form-label">
+                        Show photographer
+                        <span class="info-icon">i<span class="tooltip right">Credits the member who submitted the photo. Encourages members to contribute photos and gives proper attribution. Shows as "Photo by [Name]".</span></span>
+                    </div>
+                    <div class="toggle-row">
+                        <label class="toggle-switch">
+                            <input type="checkbox" id="show-photographer">
+                            <span class="toggle-slider"></span>
+                        </label>
+                        <span class="toggle-label">Credit the photo submitter</span>
+                    </div>
+                </div>
+
+                <div class="form-row">
+                    <div class="form-label">
+                        Show face tags
+                        <span class="info-icon">i<span class="tooltip right">Lists the names of recognized members in each photo. Only shows confirmed identifications. Members can find photos of themselves more easily, but adds visual clutter.</span></span>
+                    </div>
+                    <div class="toggle-row">
+                        <label class="toggle-switch">
+                            <input type="checkbox" id="show-faces">
+                            <span class="toggle-slider"></span>
+                        </label>
+                        <span class="toggle-label">Show names of people in photo</span>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Filtering -->
+        <div class="config-section">
+            <div class="config-section-header">
+                <h3>Content Filtering</h3>
+                <span style="font-size: 13px; color: #666;">Control which photos appear in the widget</span>
+            </div>
+            <div class="config-section-body">
+                <!-- Filter Enable/Disable Controls -->
+                <div class="form-row" style="background: #f8f9fa; padding: 15px; border-radius: 6px; margin-bottom: 25px;">
+                    <div class="form-label">
+                        Enabled filters
+                        <span class="info-icon">i<span class="tooltip right below">Toggle individual filters on/off. Disabled filters are hidden from visitors and don't affect which photos are shown.<br><br>Use this to simplify the gallery for pages that don't need filtering options.</span></span>
+                    </div>
+                    <div>
+                        <div style="display: grid; grid-template-columns: repeat(2, 1fr); gap: 10px;">
+                            <label class="toggle-row" style="margin: 0;">
+                                <label class="toggle-switch" style="transform: scale(0.85);">
+                                    <input type="checkbox" id="filter-date-enabled" checked onchange="toggleFilter('date')">
+                                    <span class="toggle-slider"></span>
+                                </label>
+                                <span class="toggle-label" style="font-size: 13px;">Date range filter</span>
+                            </label>
+                            <label class="toggle-row" style="margin: 0;">
+                                <label class="toggle-switch" style="transform: scale(0.85);">
+                                    <input type="checkbox" id="filter-activity-enabled" checked onchange="toggleFilter('activity')">
+                                    <span class="toggle-slider"></span>
+                                </label>
+                                <span class="toggle-label" style="font-size: 13px;">Activity group filter</span>
+                            </label>
+                            <label class="toggle-row" style="margin: 0;">
+                                <label class="toggle-switch" style="transform: scale(0.85);">
+                                    <input type="checkbox" id="filter-event-enabled" checked onchange="toggleFilter('event')">
+                                    <span class="toggle-slider"></span>
+                                </label>
+                                <span class="toggle-label" style="font-size: 13px;">Event filter</span>
+                            </label>
+                            <label class="toggle-row" style="margin: 0;">
+                                <label class="toggle-switch" style="transform: scale(0.85);">
+                                    <input type="checkbox" id="filter-person-enabled" onchange="toggleFilter('person')">
+                                    <span class="toggle-slider"></span>
+                                </label>
+                                <span class="toggle-label" style="font-size: 13px;">Person filter (find photos of...)</span>
+                            </label>
+                        </div>
+                        <div style="margin-top: 10px; font-size: 12px; color: #666;">
+                            Disabled filters won't appear as filter options for visitors
+                        </div>
+                    </div>
+                </div>
+
+                <div class="form-row">
+                    <div class="form-label">
+                        Photo source
+                        <span class="info-icon">i<span class="tooltip right"><strong>All approved:</strong> Shows all photos that have been reviewed and approved, regardless of visibility setting.<br><br><strong>Public only:</strong> Only photos marked as "Public" - safe for non-members to see. Use this for public-facing pages.<br><br><strong>Members-only:</strong> Photos visible only to logged-in members. Requires WA authentication.<br><br><strong>Featured:</strong> Hand-picked photos marked as featured by admins.</span></span>
+                    </div>
+                    <div>
+                        <select class="form-control" id="source">
+                            <option value="all" selected>All approved photos</option>
+                            <option value="public">Public photos only</option>
+                            <option value="members">Members-only photos</option>
+                            <option value="featured">Featured photos only</option>
+                        </select>
+                    </div>
+                </div>
+
+                <div class="form-row" id="date-range-row">
+                    <div class="form-label">
+                        Date range
+                        <span class="info-icon">i<span class="tooltip right">Limits photos to a specific time period. "Last 30 days" keeps the gallery fresh and relevant. "Current term" shows photos from the current Fall or Spring term.<br><br>For a homepage, recent photos work best. For an archive page, you might want "All time".</span></span>
+                    </div>
+                    <div>
+                        <select class="form-control" id="date-range">
+                            <option value="all">All time</option>
+                            <option value="30" selected>Last 30 days</option>
+                            <option value="90">Last 3 months</option>
+                            <option value="180">Last 6 months</option>
+                            <option value="365">Last year</option>
+                            <option value="current-term">Current term</option>
+                            <option value="custom">Custom range...</option>
+                        </select>
+                    </div>
+                </div>
+
+                <div class="form-row" id="activity-row">
+                    <div class="form-label">
+                        Activity groups
+                        <span class="info-icon">i<span class="tooltip right">Filter to show only photos from specific activity groups (committees). Leave empty to show photos from all groups.<br><br>Useful for activity-specific pages - e.g., a Happy Hikers page could show only hiking photos.</span></span>
+                    </div>
+                    <div>
+                        <div class="tag-select">
+                            <div class="tag-select-tags" id="activity-tags">
+                                <!-- Tags will be added here -->
+                            </div>
+                            <input type="text" placeholder="Type to search activity groups..." id="activity-search">
+                        </div>
+                        <div style="margin-top: 8px; font-size: 12px; color: #666;">
+                            Examples: Happy Hikers, Wine Club, Golf Group, Book Club
+                        </div>
+                    </div>
+                </div>
+
+                <div class="form-row" id="event-row">
+                    <div class="form-label">
+                        Specific events
+                        <span class="info-icon">i<span class="tooltip right">Show photos only from specific events. Useful for event recap pages or newsletters where you want to highlight a particular event.<br><br>Leave empty to show photos from all events (subject to other filters).</span></span>
+                    </div>
+                    <div>
+                        <div class="tag-select">
+                            <div class="tag-select-tags" id="event-tags">
+                                <!-- Tags will be added here -->
+                            </div>
+                            <input type="text" placeholder="Type to search events..." id="event-search-config">
+                        </div>
+                    </div>
+                </div>
+
+                <div class="form-row" id="person-row" style="opacity: 0.4; pointer-events: none;">
+                    <div class="form-label">
+                        Find photos of...
+                        <span class="info-icon">i<span class="tooltip right">Allows visitors to search for photos containing a specific member. Uses face recognition to find photos where the person appears.<br><br>Only shows confirmed face identifications. Members can easily find photos of themselves and friends.</span></span>
+                    </div>
+                    <div>
+                        <div class="tag-select">
+                            <div class="tag-select-tags" id="person-tags">
+                                <!-- Tags will be added here -->
+                            </div>
+                            <input type="text" placeholder="Type to search members..." id="person-search-config">
+                        </div>
+                        <div style="margin-top: 8px; font-size: 12px; color: #666;">
+                            Enable "Person filter" toggle above to let visitors search by who's in the photo
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Custom Filters Section -->
+                <div style="margin-top: 25px; padding-top: 20px; border-top: 1px solid #eee;">
+                    <div class="form-row">
+                        <div class="form-label">
+                            Custom filters
+                            <span class="info-icon">i<span class="tooltip right">Create custom filter categories based on photo tags. For example, you could create a "Venue" filter to let visitors filter by location, or a "Season" filter.<br><br>Custom filters appear alongside the built-in filters in the gallery.</span></span>
+                        </div>
+                        <div>
+                            <div id="custom-filters-list" style="margin-bottom: 15px;">
+                                <!-- Custom filters will be rendered here -->
+                                <div style="color: #888; font-style: italic; font-size: 13px;">No custom filters defined</div>
+                            </div>
+                            <button type="button" class="btn btn-small" onclick="addCustomFilter()">+ Add Custom Filter</button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Sorting & Pagination -->
+        <div class="config-section">
+            <div class="config-section-header">
+                <h3>Sorting & Pagination</h3>
+            </div>
+            <div class="config-section-body">
+                <div class="form-row">
+                    <div class="form-label">
+                        Sort order
+                        <span class="info-icon">i<span class="tooltip right"><strong>Newest first:</strong> Most recent photos appear first. Best for showing current activity.<br><br><strong>Oldest first:</strong> Chronological order. Good for event timelines.<br><br><strong>By event date:</strong> Groups photos by when the event occurred, not when uploaded.<br><br><strong>Random:</strong> Different photos each page load. Keeps the gallery feeling fresh but less predictable.</span></span>
+                    </div>
+                    <div>
+                        <select class="form-control" id="sort">
+                            <option value="newest" selected>Newest first</option>
+                            <option value="oldest">Oldest first</option>
+                            <option value="event-date">By event date</option>
+                            <option value="random">Random</option>
+                        </select>
+                    </div>
+                </div>
+
+                <div class="form-row" id="pagination-row">
+                    <div class="form-label">
+                        Pagination style
+                        <span class="info-icon">i<span class="tooltip right"><strong>No pagination:</strong> Shows all photos up to the limit. Simple but limited.<br><br><strong>Load More button:</strong> User clicks to see more photos. Good balance of control and simplicity.<br><br><strong>Infinite scroll:</strong> Automatically loads more as user scrolls down. Engaging but can be overwhelming.<br><br><strong>Page numbers:</strong> Traditional pagination. Best for large archives where users might want to jump to specific pages.</span></span>
+                    </div>
+                    <div>
+                        <div class="radio-group">
+                            <label class="radio-item">
+                                <input type="radio" name="pagination" value="none" checked>
+                                <span>No pagination (show all up to limit)</span>
+                            </label>
+                            <label class="radio-item">
+                                <input type="radio" name="pagination" value="load-more">
+                                <span>"Load More" button</span>
+                            </label>
+                            <label class="radio-item" id="infinite-option">
+                                <input type="radio" name="pagination" value="infinite">
+                                <span>Infinite scroll</span>
+                            </label>
+                            <label class="radio-item">
+                                <input type="radio" name="pagination" value="pages">
+                                <span>Page numbers</span>
+                            </label>
+                        </div>
+                        <div class="compat-warning" id="pagination-carousel-warning">
+                            Carousel layout has its own navigation - pagination setting is ignored.
+                        </div>
+                        <div class="compat-warning" id="pagination-infinite-warning">
+                            Infinite scroll requires widget height of at least 400px. Adjust embed code height if needed.
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Interaction -->
+        <div class="config-section">
+            <div class="config-section-header">
+                <h3>Interaction</h3>
+                <span style="font-size: 13px; color: #666;">How visitors interact with photos</span>
+            </div>
+            <div class="config-section-body">
+                <div class="form-row">
+                    <div class="form-label">
+                        Click action
+                        <span class="info-icon">i<span class="tooltip right"><strong>Lightbox:</strong> Opens photo in an overlay on the same page. Users can browse without leaving. Most common choice.<br><br><strong>Gallery page:</strong> Takes user to the full photo gallery. Good if you want to drive traffic to your gallery.<br><br><strong>Event page:</strong> Takes user to the Wild Apricot event page for that photo. Encourages event engagement.<br><br><strong>No action:</strong> Photos are display-only. Use if you just want a visual showcase.</span></span>
+                    </div>
+                    <div>
+                        <div class="radio-group">
+                            <label class="radio-item">
+                                <input type="radio" name="click-action" value="lightbox" checked>
+                                <span>Open in lightbox (overlay)</span>
+                            </label>
+                            <label class="radio-item">
+                                <input type="radio" name="click-action" value="gallery">
+                                <span>Go to full gallery page</span>
+                            </label>
+                            <label class="radio-item">
+                                <input type="radio" name="click-action" value="event">
+                                <span>Go to event page</span>
+                            </label>
+                            <label class="radio-item">
+                                <input type="radio" name="click-action" value="none">
+                                <span>No action</span>
+                            </label>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="form-row">
+                    <div class="form-label">
+                        Lightbox navigation
+                        <span class="info-icon">i<span class="tooltip right">When enabled, users can click arrows or use keyboard to browse through photos in the lightbox without closing it. Disable if you want users to view one photo at a time.</span></span>
+                    </div>
+                    <div class="toggle-row">
+                        <label class="toggle-switch">
+                            <input type="checkbox" id="lightbox-nav" checked>
+                            <span class="toggle-slider"></span>
+                        </label>
+                        <span class="toggle-label">Enable prev/next arrows in lightbox</span>
+                    </div>
+                </div>
+
+                <div class="form-row">
+                    <div class="form-label">
+                        "View All" link
+                        <span class="info-icon">i<span class="tooltip right">Adds a link below the gallery that takes visitors to your full photo gallery page. Useful when showing a limited preview on the homepage.</span></span>
+                    </div>
+                    <div class="toggle-row">
+                        <label class="toggle-switch">
+                            <input type="checkbox" id="view-all" checked>
+                            <span class="toggle-slider"></span>
+                        </label>
+                        <span class="toggle-label">Show "View All Photos" link below gallery</span>
+                    </div>
+                </div>
+
+                <div class="form-row">
+                    <div class="form-label">
+                        Gallery page URL
+                        <span class="info-icon">i<span class="tooltip right">The URL of your full photo gallery page in Wild Apricot. This is where the "View All Photos" link will go. Usually something like "/photos" or "/photo-gallery".</span></span>
+                    </div>
+                    <div>
+                        <input type="text" class="form-control" value="/photos" placeholder="/photos">
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Header/Title -->
+        <div class="config-section">
+            <div class="config-section-header">
+                <h3>Widget Header</h3>
+                <span style="font-size: 13px; color: #666;">Title displayed above the photo grid</span>
+            </div>
+            <div class="config-section-body">
+                <div class="form-row">
+                    <div class="form-label">
+                        Show header
+                        <span class="info-icon">i<span class="tooltip right">When enabled, displays a title above the photo grid. Disable if the page already has a heading or if you want the photos to blend seamlessly into your page layout.</span></span>
+                    </div>
+                    <div class="toggle-row">
+                        <label class="toggle-switch">
+                            <input type="checkbox" id="show-header" checked>
+                            <span class="toggle-slider"></span>
+                        </label>
+                        <span class="toggle-label">Display title above gallery</span>
+                    </div>
+                </div>
+
+                <div class="form-row">
+                    <div class="form-label">
+                        Title source
+                        <span class="info-icon">i<span class="tooltip right"><strong>Auto from filters:</strong> Automatically generates title based on your filter settings. E.g., "Happy Hikers Photos" or "Photos from November 2025".<br><br><strong>Event name:</strong> Uses the event name if filtering by specific event.<br><br><strong>Activity group:</strong> Uses the committee/group name if filtering by activity.<br><br><strong>Custom text:</strong> You specify the exact title text.</span></span>
+                    </div>
+                    <div>
+                        <select class="form-control" id="title-source" onchange="updateTitlePreview()">
+                            <option value="auto" selected>Auto-generate from filters</option>
+                            <option value="event">Use event name</option>
+                            <option value="activity">Use activity group name</option>
+                            <option value="custom">Custom text</option>
+                        </select>
+                    </div>
+                </div>
+
+                <div class="form-row" id="custom-title-row">
+                    <div class="form-label">
+                        Custom title
+                        <span class="info-icon">i<span class="tooltip right">Enter your own title text. Only used when "Custom text" is selected above.</span></span>
+                    </div>
+                    <div>
+                        <input type="text" class="form-control" id="custom-title" value="Recent Photos" placeholder="Recent Photos">
+                    </div>
+                </div>
+
+                <div class="form-row">
+                    <div class="form-label">
+                        Title preview
+                    </div>
+                    <div>
+                        <div id="title-preview" style="padding: 10px 15px; background: #f8f9fa; border-radius: 4px; font-size: 18px; font-weight: 600; color: var(--wa-primary-color);">
+                            Recent Photos
+                        </div>
+                        <small style="color: #666; display: block; margin-top: 5px;">Based on current filter settings</small>
+                    </div>
+                </div>
+
+                <div class="form-row">
+                    <div class="form-label">
+                        Subtitle text
+                        <span class="info-icon">i<span class="tooltip right">Optional smaller text below the title. Can also be auto-generated (e.g., date range) or custom. Leave blank for no subtitle.</span></span>
+                    </div>
+                    <div>
+                        <select class="form-control" id="subtitle-source" style="margin-bottom: 10px;">
+                            <option value="none">No subtitle</option>
+                            <option value="date-range" selected>Show date range</option>
+                            <option value="photo-count">Show photo count</option>
+                            <option value="custom">Custom text</option>
+                        </select>
+                        <input type="text" class="form-control" id="custom-subtitle" value="" placeholder="e.g., From our latest events" style="display: none;">
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Advanced -->
+        <div class="config-section">
+            <div class="config-section-header">
+                <h3>Advanced Options</h3>
+                <span style="font-size: 13px; color: #666;">Performance and technical settings</span>
+            </div>
+            <div class="config-section-body">
+                <div class="form-row">
+                    <div class="form-label">
+                        Lazy loading
+                        <span class="info-icon">i<span class="tooltip right">Images load only when they're about to scroll into view, rather than all at once. Significantly improves initial page load time, especially for galleries with many photos. Recommended to keep enabled.</span></span>
+                    </div>
+                    <div class="toggle-row">
+                        <label class="toggle-switch">
+                            <input type="checkbox" id="lazy-load" checked>
+                            <span class="toggle-slider"></span>
+                        </label>
+                        <span class="toggle-label">Load images as they scroll into view</span>
+                    </div>
+                </div>
+
+                <div class="form-row">
+                    <div class="form-label">
+                        Responsive breakpoints
+                        <span class="info-icon">i<span class="tooltip right">Automatically adjusts the number of columns based on screen size. On phones, shows 2 columns instead of 4-6. Disable only if you need fixed layout for a specific design.</span></span>
+                    </div>
+                    <div class="toggle-row">
+                        <label class="toggle-switch">
+                            <input type="checkbox" id="responsive" checked>
+                            <span class="toggle-slider"></span>
+                        </label>
+                        <span class="toggle-label">Adjust columns for mobile devices</span>
+                    </div>
+                </div>
+
+                <div class="form-row">
+                    <div class="form-label">
+                        Cache duration
+                        <span class="info-icon">i<span class="tooltip right">How long the browser remembers which photos to show before checking for updates. Longer cache = faster page loads but slower to show new photos.<br><br><strong>15 minutes:</strong> Good default - balances freshness with performance.<br><strong>1 hour+:</strong> Use for archive galleries that rarely change.</span></span>
+                    </div>
+                    <div>
+                        <select class="form-control" id="cache">
+                            <option value="0">No caching</option>
+                            <option value="5">5 minutes</option>
+                            <option value="15" selected>15 minutes</option>
+                            <option value="60">1 hour</option>
+                            <option value="1440">24 hours</option>
+                        </select>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Preview & Embed Code -->
+        <div class="config-section">
+            <div class="config-section-header">
+                <h3>Preview & Embed Code</h3>
+            </div>
+            <div class="config-section-body">
+                <!-- Preview Section -->
+                <div style="margin-bottom: 25px;">
+                    <h4 style="margin: 0 0 10px; font-size: 15px;">Live Preview</h4>
+                    <p style="font-size: 13px; color: #666; margin: 0 0 15px;">
+                        Preview shows your actual photos with current settings. Opens in a new window so you can compare with your site.
+                    </p>
+                    <button class="btn btn-primary" onclick="openFullPreview()">
+                        Open Preview Window
+                    </button>
+                    <span style="margin-left: 10px; font-size: 13px; color: #666;">
+                        Uses real photos from your gallery
+                    </span>
+                </div>
+
+                <!-- Embed Code Section -->
+                <div style="border-top: 1px solid #eee; padding-top: 20px;">
+                    <h4 style="margin: 0 0 10px; font-size: 15px;">
+                        Embed Code
+                        <span class="info-icon">i<span class="tooltip right">The embed code is an HTML snippet you paste into your Wild Apricot page to display the photo gallery.<br><br><strong>How to use:</strong><br>1. Copy the code below<br>2. In WA, edit the page where you want photos<br>3. Add an "HTML" content block<br>4. Paste the embed code<br>5. Save and preview your page<br><br>The gallery will automatically load photos based on your saved settings.</span></span>
+                    </h4>
+
+                    <!-- Auto-update explanation -->
+                    <div style="background: #e8f5e9; border-radius: 6px; padding: 12px 15px; margin-bottom: 15px;">
+                        <strong style="color: #2e7d32;">Settings update automatically!</strong>
+                        <p style="font-size: 13px; color: #555; margin: 8px 0 0;">
+                            The embed code references your saved configuration by type (public/members/admin).
+                            When you change settings here and click "Save Configuration", all pages using this embed code
+                            will automatically show the new settings - <strong>no need to update the HTML on each page</strong>.
+                        </p>
+                    </div>
+
+                    <p style="font-size: 13px; color: #666; margin: 0 0 15px;">
+                        Copy this code once and paste it into an HTML content block on your Wild Apricot page.
+                    </p>
+                    <div class="embed-code" id="embed-code">&lt;!-- SBNC Photo Gallery Widget (Public) --&gt;
+&lt;!-- Settings managed at: Admin > Photo Gallery > Widget Config --&gt;
+&lt;iframe
+  src="https://photos.sbnewcomers.org/embed/public"
+  width="100%"
+  height="500"
+  frameborder="0"
+  loading="lazy"
+  style="border: none;"&gt;
+&lt;/iframe&gt;</div>
+                    <div style="margin-top: 10px; display: flex; gap: 10px; align-items: center;">
+                        <button class="btn btn-small btn-primary" onclick="copyEmbedCode()">Copy to Clipboard</button>
+                        <span id="copy-feedback" style="color: var(--wa-success-color); font-size: 13px; display: none;">Copied!</span>
+                    </div>
+
+                    <div style="margin-top: 15px; font-size: 13px; color: #666;">
+                        <strong>Embed URLs by gallery type:</strong>
+                        <ul style="margin: 8px 0 0; padding-left: 20px;">
+                            <li><code>https://photos.sbnewcomers.org/embed/public</code> - Public gallery</li>
+                            <li><code>https://photos.sbnewcomers.org/embed/members</code> - Members gallery (requires WA login)</li>
+                            <li><code>https://photos.sbnewcomers.org/embed/admin</code> - Admin view (restricted)</li>
+                        </ul>
+                    </div>
+                </div>
+
+                <!-- Compatibility Notes -->
+                <div style="border-top: 1px solid #eee; padding-top: 20px; margin-top: 20px;">
+                    <h4 style="margin: 0 0 10px; font-size: 15px; color: var(--wa-primary-color);">
+                        Automatic Compatibility Validation
+                    </h4>
+                    <p style="font-size: 13px; color: #666; margin: 0 0 12px;">
+                        The configuration page automatically enforces compatibility between settings:
+                    </p>
+                    <ul style="font-size: 13px; color: #666; margin: 0; padding-left: 20px; line-height: 1.8;">
+                        <li><strong>Carousel layout</strong> → Columns and pagination are disabled (shows one photo at a time with built-in navigation)</li>
+                        <li><strong>Circle corners</strong> → Automatically sets thumbnail shape to square (required for circles)</li>
+                        <li><strong>Non-square shapes</strong> → Circle corners option is disabled</li>
+                        <li><strong>Original aspect + Grid</strong> → Warning suggests switching to Masonry layout</li>
+                        <li><strong>Infinite scroll</strong> → Reminder about minimum 400px widget height</li>
+                        <li><strong>Public gallery type</strong> → Photo source locked to "Public only"</li>
+                    </ul>
+                    <p style="font-size: 13px; color: #666; margin: 12px 0 0;">
+                        <span style="color: var(--wa-warning-color);">⚠️</span> Warnings appear inline when you select incompatible options.
+                        <span style="color: var(--wa-success-color);">✓</span> Auto-corrections are highlighted in green.
+                    </p>
+                </div>
+            </div>
+        </div>
+
+        <!-- Action Bar -->
+        <div class="action-bar">
+            <div class="status">
+                <span id="save-status">Unsaved changes</span>
+            </div>
+            <div class="buttons">
+                <button class="btn btn-secondary" onclick="resetDefaults()">Reset to Defaults</button>
+                <button class="btn btn-success" onclick="saveConfig()">Save Configuration</button>
+            </div>
+        </div>
+    </main>
+
+    <script>
+        // =============================================
+        // COMPATIBILITY RULES ENGINE
+        // =============================================
+
+        // Store previous values for restoration when re-enabling options
+        const savedValues = {
+            corners: null,  // Remember corner choice when forced to change
+        };
+
+        function validateCompatibility() {
+            const layout = document.getElementById('layout').value;
+            const shape = document.querySelector('input[name="shape"]:checked')?.value;
+            const corners = document.querySelector('input[name="corners"]:checked')?.value;
+            const pagination = document.querySelector('input[name="pagination"]:checked')?.value;
+
+            // Hide all warnings first
+            document.querySelectorAll('.compat-warning').forEach(w => w.classList.remove('show', 'auto-adjusted'));
+            document.querySelectorAll('.form-row').forEach(r => r.classList.remove('disabled'));
+            document.querySelectorAll('.option-disabled').forEach(o => o.classList.remove('option-disabled'));
+
+            // Rule 1: Carousel layout disables columns and pagination
+            if (layout === 'carousel') {
+                document.getElementById('columns-row').classList.add('disabled');
+                document.getElementById('columns-warning').classList.add('show');
+                document.getElementById('pagination-row').classList.add('disabled');
+                document.getElementById('pagination-carousel-warning').classList.add('show');
+            }
+
+            // Rule 2: Circle corners require square thumbnails
+            if (corners === 'circle' && shape !== 'square') {
+                // Auto-correct: change shape to square
+                document.querySelector('input[name="shape"][value="square"]').checked = true;
+                const warning = document.getElementById('shape-circle-warning');
+                warning.classList.add('show', 'auto-adjusted');
+                warning.textContent = 'Shape automatically set to square (required for circle corners).';
+            }
+
+            // Rule 3: Non-square shapes disable circle corners option
+            if (shape !== 'square') {
+                document.getElementById('circle-option').classList.add('option-disabled');
+                // If circle was selected, save it and switch to rounded
+                if (corners === 'circle') {
+                    savedValues.corners = 'circle';  // Remember they wanted circle
+                    document.querySelector('input[name="corners"][value="rounded"]').checked = true;
+                }
+            } else {
+                // Shape is square - restore circle if that's what they had before
+                if (savedValues.corners === 'circle' && corners !== 'circle') {
+                    document.querySelector('input[name="corners"][value="circle"]').checked = true;
+                    savedValues.corners = null;  // Clear saved value after restoring
+                    const warning = document.getElementById('corners-warning');
+                    warning.classList.add('show', 'auto-adjusted');
+                    warning.textContent = 'Circle corners restored (now that shape is square).';
+                }
+            }
+
+            // Rule 4: Original aspect works best with masonry
+            if (shape === 'original' && layout !== 'masonry') {
+                document.getElementById('shape-masonry-warning').classList.add('show');
+            }
+
+            // Rule 5: Masonry layout recommends original aspect
+            if (layout === 'masonry' && shape !== 'original') {
+                // Just a suggestion, no auto-change
+            }
+
+            // Rule 6: Infinite scroll warning
+            if (pagination === 'infinite' && layout !== 'carousel') {
+                document.getElementById('pagination-infinite-warning').classList.add('show');
+            }
+
+            // Rule 7: Featured layout has specific behavior
+            if (layout === 'featured') {
+                // Featured layout has 1 large + grid, columns still relevant for grid portion
+            }
+
+            // Update unsaved status
+            markUnsaved();
+        }
+
+        // Track when user explicitly changes corners (to know their preference)
+        document.querySelectorAll('input[name="corners"]').forEach(input => {
+            input.addEventListener('change', function() {
+                if (this.value !== 'circle') {
+                    savedValues.corners = null;  // User chose something else, clear saved circle
+                }
+            });
+        });
+
+        function markUnsaved() {
+            const status = document.getElementById('save-status');
+            if (status.textContent !== 'Saving...') {
+                status.textContent = 'Unsaved changes';
+                status.style.color = '#856404';
+            }
+        }
+
+        // =============================================
+        // GALLERY TYPE SWITCHING
+        // =============================================
+
+        const galleryTypeNotes = {
+            public: '<strong>Public Gallery:</strong> These settings control what non-members see. Only photos marked as "Public" will appear, regardless of other filter settings.',
+            members: '<strong>Members Gallery:</strong> These settings control what logged-in members see. Can include both public and members-only photos.',
+            admin: '<strong>Admin View:</strong> Full access for webmasters. Can show all photos including pending approval. Use for admin review pages.'
+        };
+
+        function switchGalleryType(type) {
+            document.getElementById('gallery-type-note').innerHTML = galleryTypeNotes[type];
+
+            // Update embed code
+            const embedCode = `<!-- SBNC Photo Gallery Widget (${type.charAt(0).toUpperCase() + type.slice(1)}) -->
+<!-- Settings managed at: Admin > Photo Gallery > Widget Config -->
+<iframe
+  src="https://photos.sbnewcomers.org/embed/${type}"
+  width="100%"
+  height="500"
+  frameborder="0"
+  loading="lazy"
+  style="border: none;">
+</iframe>`;
+            document.getElementById('embed-code').textContent = embedCode;
+
+            // If public gallery, force photo source to public only
+            if (type === 'public') {
+                document.getElementById('source').value = 'public';
+                document.getElementById('source').disabled = true;
+            } else {
+                document.getElementById('source').disabled = false;
+            }
+
+            markUnsaved();
+        }
+
+        // =============================================
+        // TITLE PREVIEW
+        // =============================================
+
+        function updateTitlePreview() {
+            const source = document.getElementById('title-source').value;
+            const customTitle = document.getElementById('custom-title').value;
+            const previewEl = document.getElementById('title-preview');
+            const customRow = document.getElementById('custom-title-row');
+
+            let title = '';
+            switch(source) {
+                case 'auto':
+                    title = generateAutoTitle();
+                    customRow.style.display = 'none';
+                    break;
+                case 'event':
+                    title = 'Happy Hikers - Rattlesnake Canyon';
+                    customRow.style.display = 'none';
+                    break;
+                case 'activity':
+                    title = selectedActivities.length > 0 ? selectedActivities[0] + ' Photos' : 'Activity Photos';
+                    customRow.style.display = 'none';
+                    break;
+                case 'custom':
+                    title = customTitle || 'Enter custom title...';
+                    customRow.style.display = 'grid';
+                    break;
+            }
+            previewEl.textContent = title;
+        }
+
+        function generateAutoTitle() {
+            const dateRange = document.getElementById('date-range').value;
+            if (selectedActivities.length === 1) {
+                return selectedActivities[0] + ' Photos';
+            } else if (dateRange === '30') {
+                return 'Recent Photos';
+            } else if (dateRange === 'current-term') {
+                return 'This Term\'s Photos';
+            }
+            return 'Photo Gallery';
+        }
+
+        // =============================================
+        // SUBTITLE & CUSTOM TITLE
+        // =============================================
+
+        document.getElementById('subtitle-source').addEventListener('change', function() {
+            const customInput = document.getElementById('custom-subtitle');
+            customInput.style.display = this.value === 'custom' ? 'block' : 'none';
+        });
+
+        document.getElementById('custom-title').addEventListener('input', function() {
+            if (document.getElementById('title-source').value === 'custom') {
+                document.getElementById('title-preview').textContent = this.value || 'Enter custom title...';
+            }
+            markUnsaved();
+        });
+
+        // =============================================
+        // ACTIVITY/EVENT TAGS
+        // =============================================
+
+        const activityGroups = ['Happy Hikers', 'Wine Club', 'Golf Group', 'Book Club', 'Arts Committee', 'Tennis Group', 'Bridge Club'];
+        const selectedActivities = [];
+        const selectedEvents = [];
+
+        document.getElementById('activity-search').addEventListener('keydown', function(e) {
+            if (e.key === 'Enter' && this.value.trim()) {
+                addActivityTag(this.value.trim());
+                this.value = '';
+            }
+        });
+
+        function addActivityTag(name) {
+            if (selectedActivities.includes(name)) return;
+            selectedActivities.push(name);
+            renderActivityTags();
+            updateTitlePreview();
+        }
+
+        function removeActivityTag(name) {
+            const idx = selectedActivities.indexOf(name);
+            if (idx > -1) {
+                selectedActivities.splice(idx, 1);
+                renderActivityTags();
+                updateTitlePreview();
+            }
+        }
+
+        function renderActivityTags() {
+            const container = document.getElementById('activity-tags');
+            container.innerHTML = selectedActivities.map(name => `
+                <span class="tag">
+                    ${name}
+                    <span class="remove" onclick="removeActivityTag('${name}')">&times;</span>
+                </span>
+            `).join('');
+            markUnsaved();
+        }
+
+        // =============================================
+        // EMBED CODE
+        // =============================================
+
+        function copyEmbedCode() {
+            const code = document.getElementById('embed-code').textContent;
+            navigator.clipboard.writeText(code).then(() => {
+                const feedback = document.getElementById('copy-feedback');
+                feedback.style.display = 'inline';
+                setTimeout(() => { feedback.style.display = 'none'; }, 2000);
+            });
+        }
+
+        // =============================================
+        // PREVIEW
+        // =============================================
+
+        function openFullPreview() {
+            const galleryType = document.querySelector('input[name="gallery-type"]:checked').value;
+            const previewUrl = `https://photos.sbnewcomers.org/preview/${galleryType}?draft=true`;
+            window.open(previewUrl, 'gallery_preview', 'width=1200,height=800,menubar=no,toolbar=no');
+        }
+
+        // =============================================
+        // SAVE/RESET
+        // =============================================
+
+        function saveConfig() {
+            const status = document.getElementById('save-status');
+            status.textContent = 'Saving...';
+            status.style.color = '#666';
+
+            // Simulate save
+            setTimeout(() => {
+                status.textContent = 'All changes saved';
+                status.style.color = '#27ae60';
+            }, 800);
+        }
+
+        function resetDefaults() {
+            if (confirm('Reset all settings to defaults? This cannot be undone.')) {
+                location.reload();
+            }
+        }
+
+        // =============================================
+        // FILTER TOGGLES
+        // =============================================
+
+        // Maps filter types to the IDs of form rows that should be shown/hidden
+        const filterRows = {
+            'date': ['date-range-row'],
+            'activity': ['activity-row'],
+            'event': ['event-row'],
+            'person': ['person-row']
+        };
+
+        function toggleFilter(filterType) {
+            const enabled = document.getElementById(`filter-${filterType}-enabled`).checked;
+            const rows = filterRows[filterType] || [];
+
+            rows.forEach(rowId => {
+                const row = document.getElementById(rowId);
+                if (row) {
+                    row.style.opacity = enabled ? '1' : '0.4';
+                    row.style.pointerEvents = enabled ? 'auto' : 'none';
+                }
+            });
+
+            // Update preview to reflect filter state
+            updateFilterPreview();
+            markUnsaved();
+        }
+
+        function updateFilterPreview() {
+            // This would update the live preview to show/hide filter UI
+            console.log('Filter settings updated');
+        }
+
+        // =============================================
+        // CUSTOM FILTERS
+        // =============================================
+
+        const customFilters = [];
+        let customFilterCounter = 0;
+
+        function addCustomFilter() {
+            const filterId = ++customFilterCounter;
+            customFilters.push({
+                id: filterId,
+                name: '',
+                tagCategory: '',
+                enabled: true
+            });
+            renderCustomFilters();
+            markUnsaved();
+        }
+
+        function removeCustomFilter(filterId) {
+            const idx = customFilters.findIndex(f => f.id === filterId);
+            if (idx > -1) {
+                customFilters.splice(idx, 1);
+                renderCustomFilters();
+                markUnsaved();
+            }
+        }
+
+        function updateCustomFilter(filterId, field, value) {
+            const filter = customFilters.find(f => f.id === filterId);
+            if (filter) {
+                filter[field] = value;
+                markUnsaved();
+            }
+        }
+
+        function renderCustomFilters() {
+            const container = document.getElementById('custom-filters-list');
+
+            if (customFilters.length === 0) {
+                container.innerHTML = '<div style="color: #888; font-style: italic; font-size: 13px;">No custom filters defined</div>';
+                return;
+            }
+
+            container.innerHTML = customFilters.map(filter => `
+                <div style="background: #f8f9fa; padding: 12px; border-radius: 6px; margin-bottom: 10px;">
+                    <div style="display: flex; gap: 10px; align-items: center;">
+                        <input type="text" class="form-control" style="flex: 1;" placeholder="Filter name (e.g., Venue)"
+                            value="${filter.name}" onchange="updateCustomFilter(${filter.id}, 'name', this.value)">
+                        <select class="form-control" style="flex: 1;" onchange="updateCustomFilter(${filter.id}, 'tagCategory', this.value)">
+                            <option value="">Select tag category...</option>
+                            <option value="location" ${filter.tagCategory === 'location' ? 'selected' : ''}>Location</option>
+                            <option value="season" ${filter.tagCategory === 'season' ? 'selected' : ''}>Season</option>
+                            <option value="photographer" ${filter.tagCategory === 'photographer' ? 'selected' : ''}>Photographer</option>
+                            <option value="custom" ${filter.tagCategory === 'custom' ? 'selected' : ''}>Custom tags</option>
+                        </select>
+                        <label class="toggle-switch" style="transform: scale(0.8);">
+                            <input type="checkbox" ${filter.enabled ? 'checked' : ''} onchange="updateCustomFilter(${filter.id}, 'enabled', this.checked)">
+                            <span class="toggle-slider"></span>
+                        </label>
+                        <button type="button" class="btn btn-small btn-danger" onclick="removeCustomFilter(${filter.id})"
+                            style="padding: 4px 10px;">&times;</button>
+                    </div>
+                    ${filter.tagCategory === 'custom' ? `
+                        <div style="margin-top: 10px;">
+                            <input type="text" class="form-control" placeholder="Enter custom tag values (comma-separated)"
+                                style="font-size: 13px;">
+                        </div>
+                    ` : ''}
+                </div>
+            `).join('');
+        }
+
+        // =============================================
+        // EVENT LISTENERS FOR VALIDATION
+        // =============================================
+
+        // Layout changes
+        document.getElementById('layout').addEventListener('change', function() {
+            validateCompatibility();
+
+            // Suggest masonry for original aspect
+            if (this.value === 'masonry') {
+                // Optionally suggest original aspect
+            }
+        });
+
+        // Shape changes
+        document.querySelectorAll('input[name="shape"]').forEach(input => {
+            input.addEventListener('change', validateCompatibility);
+        });
+
+        // Corner changes
+        document.querySelectorAll('input[name="corners"]').forEach(input => {
+            input.addEventListener('change', validateCompatibility);
+        });
+
+        // Pagination changes
+        document.querySelectorAll('input[name="pagination"]').forEach(input => {
+            input.addEventListener('change', validateCompatibility);
+        });
+
+        // All other inputs mark as unsaved
+        document.querySelectorAll('select, input').forEach(el => {
+            el.addEventListener('change', markUnsaved);
+        });
+
+        // Date range affects title preview
+        document.getElementById('date-range').addEventListener('change', updateTitlePreview);
+
+        // Title source changes
+        document.getElementById('title-source').addEventListener('change', updateTitlePreview);
+
+        // Initialize on page load
+        document.addEventListener('DOMContentLoaded', function() {
+            validateCompatibility();
+            updateTitlePreview();
+            document.getElementById('save-status').textContent = 'No unsaved changes';
+            document.getElementById('save-status').style.color = '#27ae60';
+        });
+    </script>
+</body>
+</html>

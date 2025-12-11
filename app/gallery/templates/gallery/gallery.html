@@ -1,0 +1,478 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="user-scalable=no, width=device-width, initial-scale=1, maximum-scale=1">
+    <title>SBNC Photo Gallery</title>
+
+    <!-- jQuery -->
+    <script src="https://cdn.jsdelivr.net/npm/jquery@3/dist/jquery.min.js"></script>
+
+    <!-- nanogallery2 -->
+    <link href="https://cdn.jsdelivr.net/npm/nanogallery2@3/dist/css/nanogallery2.min.css" rel="stylesheet">
+    <script src="https://cdn.jsdelivr.net/npm/nanogallery2@3/dist/jquery.nanogallery2.min.js"></script>
+
+    <!-- Select2 for searchable dropdowns -->
+    <link href="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/css/select2.min.css" rel="stylesheet">
+    <script src="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/js/select2.min.js"></script>
+
+    <style>
+        * { box-sizing: border-box; }
+        body {
+            font-family: Arial, sans-serif;
+            margin: 0;
+            padding: 20px;
+            background-color: #f5f5f5;
+        }
+        h1 {
+            color: #2c5aa0;
+            text-align: center;
+            margin-bottom: 10px;
+        }
+        .subtitle {
+            text-align: center;
+            color: #666;
+            margin-bottom: 30px;
+        }
+
+        /* Filter bar */
+        .filter-bar {
+            background: white;
+            border-radius: 8px;
+            padding: 20px;
+            margin-bottom: 20px;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+        }
+        .filter-row {
+            display: flex;
+            gap: 15px;
+            flex-wrap: wrap;
+            align-items: flex-end;
+        }
+        .filter-group {
+            display: flex;
+            flex-direction: column;
+            min-width: 180px;
+        }
+        .filter-group label {
+            font-size: 12px;
+            color: #666;
+            margin-bottom: 5px;
+            font-weight: 500;
+        }
+        .filter-group select {
+            padding: 10px 12px;
+            border: 1px solid #ddd;
+            border-radius: 5px;
+            font-size: 14px;
+            background: white;
+            cursor: pointer;
+        }
+        .filter-group select:focus {
+            outline: none;
+            border-color: #2c5aa0;
+            box-shadow: 0 0 0 2px rgba(44,90,160,0.2);
+        }
+
+        .member-search-group {
+            flex: 1;
+            min-width: 280px;
+            max-width: 400px;
+        }
+        .select2-container { width: 100% !important; }
+        .select2-container--default .select2-selection--single {
+            height: 42px;
+            padding: 6px 12px;
+            border: 1px solid #ddd;
+            border-radius: 5px;
+        }
+        .select2-container--default .select2-selection--single .select2-selection__rendered {
+            line-height: 28px;
+        }
+        .select2-results__option--highlighted { background-color: #2c5aa0 !important; }
+
+        .btn-clear {
+            background: #f0f0f0;
+            color: #666;
+            border: 1px solid #ddd;
+            padding: 10px 15px;
+            border-radius: 5px;
+            font-size: 14px;
+            cursor: pointer;
+            height: 42px;
+        }
+        .btn-clear:hover { background: #e0e0e0; }
+
+        /* Active filters */
+        .active-filters {
+            margin-top: 15px;
+            padding-top: 15px;
+            border-top: 1px solid #eee;
+            display: none;
+        }
+        .active-filters.visible {
+            display: flex;
+            align-items: center;
+            flex-wrap: wrap;
+            gap: 8px;
+        }
+        .filter-tag {
+            display: inline-flex;
+            align-items: center;
+            background: #e8f0fe;
+            color: #2c5aa0;
+            padding: 5px 10px;
+            border-radius: 15px;
+            font-size: 13px;
+        }
+        .filter-tag .remove {
+            margin-left: 8px;
+            cursor: pointer;
+            opacity: 0.7;
+        }
+        .filter-tag .remove:hover { opacity: 1; }
+        .filter-tag.person { background: #fce4ec; color: #c2185b; }
+        .filter-tag.event { background: #e8f5e9; color: #2e7d32; }
+
+        /* Results info */
+        .results-info {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 15px;
+            padding: 0 5px;
+        }
+        .results-count { font-size: 14px; color: #666; }
+        .results-count strong { color: #333; }
+        .view-mode {
+            font-size: 13px;
+            color: #888;
+            background: #f0f0f0;
+            padding: 5px 10px;
+            border-radius: 4px;
+        }
+
+        /* Gallery container */
+        .gallery-container {
+            background: white;
+            border-radius: 8px;
+            padding: 20px;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+            min-height: 400px;
+        }
+
+        /* Member option in dropdown */
+        .member-option {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+        .member-option img {
+            width: 30px;
+            height: 30px;
+            border-radius: 50%;
+            object-fit: cover;
+        }
+        .member-option .name { font-weight: 500; }
+        .member-option .count { color: #888; font-size: 12px; }
+
+        /* Mobile styles */
+        @media (max-width: 768px) {
+            body { padding: 10px; }
+            h1 { font-size: 22px; }
+            .filter-bar { padding: 15px; }
+            .filter-row { flex-direction: column; gap: 12px; }
+            .filter-group { width: 100%; min-width: unset; }
+            .member-search-group { max-width: 100%; }
+            .results-info { flex-direction: column; align-items: flex-start; gap: 10px; }
+        }
+    </style>
+</head>
+<body>
+
+<h1>Santa Barbara Newcomers Club Photo Gallery</h1>
+<p class="subtitle">Browse photos from SBNC events</p>
+
+<!-- Filter Bar -->
+<div class="filter-bar">
+    <div class="filter-row">
+        <!-- Member Search -->
+        <div class="filter-group member-search-group">
+            <label>Find a Member</label>
+            <select id="member-search" class="member-select">
+                <option value="">Type to search members...</option>
+            </select>
+        </div>
+
+        <!-- Activity Group -->
+        <div class="filter-group">
+            <label>Activity Group</label>
+            <select id="filter-activity">
+                <option value="">All Activities</option>
+            </select>
+        </div>
+
+        <!-- Event -->
+        <div class="filter-group">
+            <label>Event</label>
+            <select id="filter-event">
+                <option value="">All Events</option>
+            </select>
+        </div>
+
+        <!-- Year -->
+        <div class="filter-group">
+            <label>Year</label>
+            <select id="filter-year">
+                <option value="">All Years</option>
+            </select>
+        </div>
+
+        <!-- Clear Button -->
+        <div class="filter-actions">
+            <button class="btn-clear" onclick="clearFilters()">Clear All</button>
+        </div>
+    </div>
+
+    <div class="active-filters" id="active-filters"></div>
+</div>
+
+<!-- Results Info -->
+<div class="results-info">
+    <div class="results-count" id="results-count">Loading...</div>
+    <div class="view-mode" id="view-mode">Browse Events</div>
+</div>
+
+<!-- Gallery Container -->
+<div class="gallery-container">
+    <div id="gallery"></div>
+</div>
+
+<script>
+// Data storage
+let members = [];
+let activities = [];
+let events = [];
+
+// Current filters
+let currentFilters = {
+    member: null,
+    activity: null,
+    event: null,
+    year: null
+};
+
+// Initialize
+$(document).ready(function() {
+    // Load filter data
+    Promise.all([
+        fetch('/api/members.json').then(r => r.json()),
+        fetch('/api/activities.json').then(r => r.json()),
+        fetch('/api/events.json').then(r => r.json())
+    ]).then(([membersData, activitiesData, eventsData]) => {
+        members = membersData;
+        activities = activitiesData;
+        events = eventsData;
+
+        populateFilters();
+        initMemberSearch();
+        loadGallery();
+    });
+
+    // Bind filter changes
+    $('#filter-activity').on('change', applyFilters);
+    $('#filter-event').on('change', applyFilters);
+    $('#filter-year').on('change', applyFilters);
+});
+
+function populateFilters() {
+    // Activities
+    const activitySelect = $('#filter-activity');
+    activities.forEach(a => {
+        activitySelect.append(`<option value="${a.id}">${a.name} (${a.photoCount})</option>`);
+    });
+
+    // Years (extract from events)
+    const years = [...new Set(events.map(e => e.date.substring(0, 4)))].sort().reverse();
+    const yearSelect = $('#filter-year');
+    years.forEach(y => {
+        yearSelect.append(`<option value="${y}">${y}</option>`);
+    });
+
+    // Events (grouped by year)
+    const eventSelect = $('#filter-event');
+    let currentYear = null;
+    events.forEach(e => {
+        const year = e.date.substring(0, 4);
+        if (year !== currentYear) {
+            eventSelect.append(`<optgroup label="${year}">`);
+            currentYear = year;
+        }
+        eventSelect.append(`<option value="${e.id}">${e.name}</option>`);
+    });
+}
+
+function initMemberSearch() {
+    $('#member-search').select2({
+        placeholder: 'Type to search members...',
+        allowClear: true,
+        minimumInputLength: 1,
+        data: members.map(m => ({
+            id: m.id,
+            text: m.name,
+            photoCount: m.photoCount,
+            thumb: m.thumb
+        })),
+        templateResult: formatMember,
+        templateSelection: formatMemberSelection
+    });
+
+    $('#member-search').on('change', applyFilters);
+}
+
+function formatMember(member) {
+    if (!member.id) return member.text;
+    return $(`<div class="member-option">
+        <img src="${member.thumb || '/static/default-avatar.png'}" />
+        <div><div class="name">${member.text}</div>
+        <div class="count">${member.photoCount} photos</div></div></div>`);
+}
+
+function formatMemberSelection(member) {
+    return member.text || 'Type to search members...';
+}
+
+function applyFilters() {
+    currentFilters.member = $('#member-search').val() || null;
+    currentFilters.activity = $('#filter-activity').val() || null;
+    currentFilters.event = $('#filter-event').val() || null;
+    currentFilters.year = $('#filter-year').val() || null;
+
+    updateActiveFilters();
+    loadGallery();
+}
+
+function updateActiveFilters() {
+    const $container = $('#active-filters');
+    $container.empty();
+
+    let hasFilters = false;
+
+    if (currentFilters.member) {
+        const member = members.find(m => m.id === currentFilters.member);
+        if (member) {
+            $container.append(`<span class="filter-tag person">${member.name}
+                <span class="remove" onclick="removeFilter('member')">✕</span></span>`);
+            hasFilters = true;
+        }
+    }
+
+    if (currentFilters.activity) {
+        $container.append(`<span class="filter-tag">${currentFilters.activity}
+            <span class="remove" onclick="removeFilter('activity')">✕</span></span>`);
+        hasFilters = true;
+    }
+
+    if (currentFilters.event) {
+        const event = events.find(e => e.id === currentFilters.event);
+        if (event) {
+            $container.append(`<span class="filter-tag event">${event.name}
+                <span class="remove" onclick="removeFilter('event')">✕</span></span>`);
+            hasFilters = true;
+        }
+    }
+
+    if (currentFilters.year) {
+        $container.append(`<span class="filter-tag">${currentFilters.year}
+            <span class="remove" onclick="removeFilter('year')">✕</span></span>`);
+        hasFilters = true;
+    }
+
+    $container.toggleClass('visible', hasFilters);
+}
+
+function removeFilter(type) {
+    currentFilters[type] = null;
+    if (type === 'member') $('#member-search').val(null).trigger('change.select2');
+    if (type === 'activity') $('#filter-activity').val('');
+    if (type === 'event') $('#filter-event').val('');
+    if (type === 'year') $('#filter-year').val('');
+    applyFilters();
+}
+
+function clearFilters() {
+    currentFilters = { member: null, activity: null, event: null, year: null };
+    $('#member-search').val(null).trigger('change.select2');
+    $('#filter-activity').val('');
+    $('#filter-event').val('');
+    $('#filter-year').val('');
+    updateActiveFilters();
+    loadGallery();
+}
+
+function loadGallery() {
+    // Build API URL with filters
+    let url = '/api/gallery.json?';
+    const params = [];
+    if (currentFilters.member) params.push(`member=${currentFilters.member}`);
+    if (currentFilters.activity) params.push(`activity=${currentFilters.activity}`);
+    if (currentFilters.event) params.push(`event=${currentFilters.event}`);
+    if (currentFilters.year) params.push(`year=${currentFilters.year}`);
+    url += params.join('&');
+
+    // Destroy existing gallery
+    $('#gallery').nanogallery2('destroy');
+
+    // Determine view mode
+    let viewMode = 'Browse Events';
+    if (currentFilters.event) viewMode = 'Event Photos';
+    else if (currentFilters.member) viewMode = 'Member Photos';
+    else if (currentFilters.activity) viewMode = 'Activity Events';
+    else if (currentFilters.year) viewMode = `${currentFilters.year} Events`;
+
+    $('#view-mode').text(viewMode);
+
+    // Load new gallery
+    $('#gallery').nanogallery2({
+        itemsBaseURL: '',
+        items: url,
+        thumbnailWidth: 'auto',
+        thumbnailHeight: 200,
+        thumbnailBorderHorizontal: 0,
+        thumbnailBorderVertical: 0,
+        thumbnailGutterWidth: 10,
+        thumbnailGutterHeight: 10,
+        thumbnailLabel: {
+            display: true,
+            position: 'overImageOnBottom',
+            hideIcons: true
+        },
+        thumbnailHoverEffect2: 'imageScale150',
+        galleryDisplayMode: 'rows',
+        galleryMaxRows: 10,
+        gallerySorting: 'random',
+
+        // Lightbox
+        viewerToolbar: {
+            display: true,
+            standard: 'previousButton,label,nextButton',
+            minimized: 'label'
+        },
+
+        // Album navigation
+        album: {
+            navigationMode: 'standard'
+        },
+
+        // Events
+        fnGalleryRenderEnd: function(items) {
+            const count = items.length;
+            const type = currentFilters.event ? 'photos' : 'events';
+            $('#results-count').html(`Showing <strong>${count} ${type}</strong>`);
+        }
+    });
+}
+</script>
+
+</body>
+</html>

@@ -1,0 +1,420 @@
+{% extends "admin/base.html" %}
+
+{% block title %}Settings - SBNC Photo Admin{% endblock %}
+
+{% block extra_css %}
+<style>
+.settings-container {
+    max-width: 900px;
+}
+
+.settings-section {
+    background: white;
+    border-radius: 8px;
+    padding: 20px;
+    margin-bottom: 20px;
+    box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+}
+
+.settings-section h3 {
+    margin: 0 0 20px;
+    padding-bottom: 10px;
+    border-bottom: 1px solid #eee;
+    color: #333;
+}
+
+.settings-section p.description {
+    color: #666;
+    font-size: 14px;
+    margin: -10px 0 20px;
+}
+
+.form-group {
+    margin-bottom: 15px;
+}
+
+.form-group label {
+    display: block;
+    font-weight: 500;
+    margin-bottom: 5px;
+    color: #333;
+}
+
+.form-group .hint {
+    font-size: 12px;
+    color: #888;
+    margin-top: 3px;
+}
+
+.form-group input[type="text"],
+.form-group input[type="number"],
+.form-group input[type="url"],
+.form-group textarea {
+    width: 100%;
+    padding: 10px;
+    border: 1px solid #ddd;
+    border-radius: 5px;
+    font-size: 14px;
+}
+
+.form-group input:focus,
+.form-group textarea:focus {
+    border-color: #2c5aa0;
+    outline: none;
+}
+
+.form-group textarea {
+    resize: vertical;
+    min-height: 60px;
+}
+
+.form-row {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+    gap: 15px;
+}
+
+.form-row .form-group {
+    margin-bottom: 0;
+}
+
+.form-actions {
+    display: flex;
+    gap: 10px;
+    margin-top: 30px;
+    padding-top: 20px;
+    border-top: 1px solid #eee;
+}
+
+.btn-reset {
+    background: #f8f9fa;
+    color: #666;
+    border: 1px solid #ddd;
+}
+
+.btn-reset:hover {
+    background: #e9ecef;
+}
+
+.config-info {
+    background: #f8f9fa;
+    border-radius: 5px;
+    padding: 12px 15px;
+    margin-bottom: 20px;
+    font-size: 13px;
+    color: #666;
+}
+
+.config-info strong {
+    color: #333;
+}
+
+.tag-list {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 5px;
+    margin-top: 8px;
+}
+
+.tag {
+    background: #e9ecef;
+    padding: 4px 10px;
+    border-radius: 3px;
+    font-size: 12px;
+    font-family: monospace;
+}
+
+.unsaved-warning {
+    display: none;
+    background: #fff3cd;
+    border: 1px solid #ffc107;
+    color: #856404;
+    padding: 10px 15px;
+    border-radius: 5px;
+    margin-bottom: 20px;
+}
+
+.unsaved-warning.show {
+    display: block;
+}
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="settings-container">
+    <h2>Gallery Settings</h2>
+
+    <div class="config-info">
+        <strong>Config file:</strong> data/gallery_config.json
+        {% if config.lastModified %}
+        &nbsp;|&nbsp; <strong>Last modified:</strong> {{ config.lastModified }}
+        {% endif %}
+    </div>
+
+    <div id="unsavedWarning" class="unsaved-warning">
+        You have unsaved changes. Don't forget to save!
+    </div>
+
+    <form id="settingsForm" method="POST">
+        <!-- Gallery Display Settings -->
+        <div class="settings-section">
+            <h3>Gallery Display</h3>
+            <p class="description">Settings for how the photo gallery appears to visitors.</p>
+
+            <div class="form-group">
+                <label for="gallery_title">Gallery Title</label>
+                <input type="text" id="gallery_title" name="gallery_title"
+                       value="{{ config.gallery.title }}">
+            </div>
+
+            <div class="form-group">
+                <label for="gallery_subtitle">Gallery Subtitle</label>
+                <input type="text" id="gallery_subtitle" name="gallery_subtitle"
+                       value="{{ config.gallery.subtitle }}">
+            </div>
+
+            <div class="form-row">
+                <div class="form-group">
+                    <label for="gallery_thumbnailHeight">Thumbnail Height (px)</label>
+                    <input type="number" id="gallery_thumbnailHeight" name="gallery_thumbnailHeight"
+                           value="{{ config.gallery.thumbnailHeight }}" min="100" max="400">
+                    <div class="hint">Height of thumbnails in the gallery grid</div>
+                </div>
+
+                <div class="form-group">
+                    <label for="gallery_maxRows">Max Rows</label>
+                    <input type="number" id="gallery_maxRows" name="gallery_maxRows"
+                           value="{{ config.gallery.maxRows }}" min="5" max="100">
+                    <div class="hint">Maximum rows to display before "load more"</div>
+                </div>
+            </div>
+
+            <div class="form-row">
+                <div class="form-group">
+                    <label for="gallery_gutterWidth">Gutter Width (px)</label>
+                    <input type="number" id="gallery_gutterWidth" name="gallery_gutterWidth"
+                           value="{{ config.gallery.gutterWidth }}" min="0" max="50">
+                </div>
+
+                <div class="form-group">
+                    <label for="gallery_gutterHeight">Gutter Height (px)</label>
+                    <input type="number" id="gallery_gutterHeight" name="gallery_gutterHeight"
+                           value="{{ config.gallery.gutterHeight }}" min="0" max="50">
+                </div>
+            </div>
+        </div>
+
+        <!-- UI Labels -->
+        <div class="settings-section">
+            <h3>UI Labels</h3>
+            <p class="description">Text labels shown in the gallery interface. Useful for customization or localization.</p>
+
+            <div class="form-row">
+                <div class="form-group">
+                    <label for="labels_findMember">Find Member Button</label>
+                    <input type="text" id="labels_findMember" name="labels_findMember"
+                           value="{{ config.labels.findMember }}">
+                </div>
+
+                <div class="form-group">
+                    <label for="labels_activity">Activity Label</label>
+                    <input type="text" id="labels_activity" name="labels_activity"
+                           value="{{ config.labels.activity }}">
+                </div>
+            </div>
+
+            <div class="form-row">
+                <div class="form-group">
+                    <label for="labels_event">Event Label</label>
+                    <input type="text" id="labels_event" name="labels_event"
+                           value="{{ config.labels.event }}">
+                </div>
+
+                <div class="form-group">
+                    <label for="labels_year">Year Label</label>
+                    <input type="text" id="labels_year" name="labels_year"
+                           value="{{ config.labels.year }}">
+                </div>
+            </div>
+
+            <div class="form-row">
+                <div class="form-group">
+                    <label for="labels_clear">Clear Button</label>
+                    <input type="text" id="labels_clear" name="labels_clear"
+                           value="{{ config.labels.clear }}">
+                </div>
+
+                <div class="form-group">
+                    <label for="labels_loading">Loading Text</label>
+                    <input type="text" id="labels_loading" name="labels_loading"
+                           value="{{ config.labels.loading }}">
+                </div>
+            </div>
+
+            <div class="form-row">
+                <div class="form-group">
+                    <label for="labels_browseEvents">Browse Events</label>
+                    <input type="text" id="labels_browseEvents" name="labels_browseEvents"
+                           value="{{ config.labels.browseEvents }}">
+                </div>
+
+                <div class="form-group">
+                    <label for="labels_eventPhotos">Event Photos</label>
+                    <input type="text" id="labels_eventPhotos" name="labels_eventPhotos"
+                           value="{{ config.labels.eventPhotos }}">
+                </div>
+            </div>
+
+            <div class="form-row">
+                <div class="form-group">
+                    <label for="labels_memberPhotos">Member Photos</label>
+                    <input type="text" id="labels_memberPhotos" name="labels_memberPhotos"
+                           value="{{ config.labels.memberPhotos }}">
+                </div>
+
+                <div class="form-group">
+                    <label for="labels_activityEvents">Activity Events</label>
+                    <input type="text" id="labels_activityEvents" name="labels_activityEvents"
+                           value="{{ config.labels.activityEvents }}">
+                </div>
+            </div>
+        </div>
+
+        <!-- File Upload Settings -->
+        <div class="settings-section">
+            <h3>File Upload</h3>
+            <p class="description">Settings for photo uploads.</p>
+
+            <div class="form-group">
+                <label for="upload_maxFileSizeMB">Max File Size (MB)</label>
+                <input type="number" id="upload_maxFileSizeMB" name="upload_maxFileSizeMB"
+                       value="{{ config.upload.maxFileSizeMB }}" min="1" max="100">
+                <div class="hint">Maximum size for uploaded photos</div>
+            </div>
+
+            <div class="form-group">
+                <label>Allowed File Types</label>
+                <div class="tag-list">
+                    {% for ext in config.upload.validExtensions %}
+                    <span class="tag">{{ ext }}</span>
+                    {% endfor %}
+                </div>
+                <div class="hint">To change allowed types, edit the config file directly</div>
+            </div>
+        </div>
+
+        <!-- Library CDN URLs -->
+        <div class="settings-section">
+            <h3>External Libraries</h3>
+            <p class="description">CDN URLs for JavaScript/CSS libraries. Update to upgrade library versions.</p>
+
+            <div class="form-group">
+                <label for="libraries_jquery">jQuery</label>
+                <input type="url" id="libraries_jquery" name="libraries_jquery"
+                       value="{{ config.libraries.jquery }}">
+            </div>
+
+            <div class="form-group">
+                <label for="libraries_nanogallery2Js">nanogallery2 JS</label>
+                <input type="url" id="libraries_nanogallery2Js" name="libraries_nanogallery2Js"
+                       value="{{ config.libraries.nanogallery2Js }}">
+            </div>
+
+            <div class="form-group">
+                <label for="libraries_nanogallery2Css">nanogallery2 CSS</label>
+                <input type="url" id="libraries_nanogallery2Css" name="libraries_nanogallery2Css"
+                       value="{{ config.libraries.nanogallery2Css }}">
+            </div>
+
+            <div class="form-group">
+                <label for="libraries_select2Js">Select2 JS</label>
+                <input type="url" id="libraries_select2Js" name="libraries_select2Js"
+                       value="{{ config.libraries.select2Js }}">
+            </div>
+
+            <div class="form-group">
+                <label for="libraries_select2Css">Select2 CSS</label>
+                <input type="url" id="libraries_select2Css" name="libraries_select2Css"
+                       value="{{ config.libraries.select2Css }}">
+            </div>
+        </div>
+
+        <!-- Face Recognition Settings -->
+        <div class="settings-section">
+            <h3>Face Recognition</h3>
+            <p class="description">Confidence thresholds for face matching. Lower values = more matches but more false positives.</p>
+
+            <div class="form-row">
+                <div class="form-group">
+                    <label for="faceRecognition_highConfidenceThreshold">High Confidence</label>
+                    <input type="number" id="faceRecognition_highConfidenceThreshold"
+                           name="faceRecognition_highConfidenceThreshold"
+                           value="{{ config.faceRecognition.highConfidenceThreshold }}"
+                           step="0.05" min="0.1" max="1.0">
+                    <div class="hint">Auto-accept threshold (default: 0.4)</div>
+                </div>
+
+                <div class="form-group">
+                    <label for="faceRecognition_mediumConfidenceThreshold">Medium Confidence</label>
+                    <input type="number" id="faceRecognition_mediumConfidenceThreshold"
+                           name="faceRecognition_mediumConfidenceThreshold"
+                           value="{{ config.faceRecognition.mediumConfidenceThreshold }}"
+                           step="0.05" min="0.1" max="1.0">
+                    <div class="hint">Show as suggestion (default: 0.5)</div>
+                </div>
+            </div>
+
+            <div class="form-group">
+                <label for="faceRecognition_publicEventThreshold">Public Event Threshold</label>
+                <input type="number" id="faceRecognition_publicEventThreshold"
+                       name="faceRecognition_publicEventThreshold"
+                       value="{{ config.faceRecognition.publicEventThreshold }}"
+                       step="0.05" min="0.1" max="1.0">
+                <div class="hint">Stricter threshold for public events (default: 0.35)</div>
+            </div>
+        </div>
+
+        <div class="form-actions">
+            <button type="submit" class="btn btn-primary btn-large">Save Settings</button>
+            <button type="button" class="btn btn-reset" onclick="resetToDefaults()">Reset to Defaults</button>
+        </div>
+    </form>
+</div>
+
+<script>
+// Track unsaved changes
+let hasChanges = false;
+const form = document.getElementById('settingsForm');
+const warning = document.getElementById('unsavedWarning');
+
+form.addEventListener('input', function() {
+    hasChanges = true;
+    warning.classList.add('show');
+});
+
+form.addEventListener('submit', function() {
+    hasChanges = false;
+});
+
+window.addEventListener('beforeunload', function(e) {
+    if (hasChanges) {
+        e.preventDefault();
+        e.returnValue = '';
+    }
+});
+
+function resetToDefaults() {
+    if (confirm('Are you sure you want to reset all settings to their default values? This cannot be undone.')) {
+        fetch('{{ url_for("admin.reset_settings") }}', { method: 'POST' })
+            .then(r => r.json())
+            .then(data => {
+                if (data.success) {
+                    location.reload();
+                } else {
+                    alert('Error resetting settings: ' + data.error);
+                }
+            });
+    }
+}
+</script>
+{% endblock %}

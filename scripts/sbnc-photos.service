@@ -1,0 +1,22 @@
+[Unit]
+Description=SBNC Photo Gallery Service
+After=network.target
+
+[Service]
+Type=simple
+User=root
+Group=root
+WorkingDirectory=/opt/sbnc-photos
+Environment="PATH=/usr/local/bin:/usr/bin:/bin"
+EnvironmentFile=/opt/sbnc-photos/.env
+ExecStart=/usr/local/bin/gunicorn --bind 127.0.0.1:5199 --workers 2 --timeout 120 "app.main:create_app()"
+Restart=always
+RestartSec=10
+
+# Logging
+StandardOutput=journal
+StandardError=journal
+SyslogIdentifier=sbnc-photos
+
+[Install]
+WantedBy=multi-user.target

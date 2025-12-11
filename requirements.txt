@@ -1,0 +1,47 @@
+# SBNC Photo Gallery System - Dependencies
+
+# Web framework
+flask>=2.0
+flask-login
+flask-wtf
+werkzeug
+
+# Image processing
+Pillow>=9.0
+pillow-heif
+rawpy  # RAW file support (Nikon NEF, Canon CR2/CR3, Sony ARW, etc.)
+
+# EXIF extraction
+exifread
+
+# Face recognition
+face_recognition
+dlib
+numpy
+scipy
+
+# Database
+# sqlite3 is built-in
+
+# Email
+# imaplib is built-in
+
+# HTTP client (for WA API)
+requests
+
+# WebDAV
+webdavclient3
+
+# Geocoding
+geopy
+
+# Utilities
+python-dotenv
+python-dateutil
+
+# WSGI server
+gunicorn
+
+# Note: exiftool must be installed separately (system package)
+# Ubuntu: sudo apt install libimage-exiftool-perl
+# macOS: brew install exiftool

@@ -1,0 +1,124 @@
+{% extends "admin/base.html" %}
+
+{% block title %}Review Queue - SBNC Photo Admin{% endblock %}
+
+{% block content %}
+<div class="queue-page">
+    <div class="queue-header">
+        <h2>Review Queue</h2>
+        <div class="queue-tabs">
+            <a href="{{ url_for('admin.review_queue', status='awaiting_approval') }}"
+               class="tab {% if status == 'awaiting_approval' %}active{% endif %}">
+                Awaiting Approval
+            </a>
+            <a href="{{ url_for('admin.review_queue', status='members_only') }}"
+               class="tab {% if status == 'members_only' %}active{% endif %}">
+                Members Only
+            </a>
+            <a href="{{ url_for('admin.review_queue', status='public') }}"
+               class="tab {% if status == 'public' %}active{% endif %}">
+                Public
+            </a>
+            <a href="{{ url_for('admin.review_queue', status='do_not_post') }}"
+               class="tab {% if status == 'do_not_post' %}active{% endif %}">
+                Do Not Post
+            </a>
+        </div>
+    </div>
+
+    {% if photos %}
+    <div class="bulk-actions">
+        <label><input type="checkbox" id="select-all"> Select All</label>
+        <button class="btn btn-success" onclick="bulkApprove()">Approve Selected</button>
+        <button class="btn btn-danger" onclick="bulkReject()">Reject Selected</button>
+    </div>
+
+    <div class="photo-grid">
+        {% for photo in photos %}
+        <div class="photo-card" data-photo-id="{{ photo.id }}">
+            <div class="photo-select">
+                <input type="checkbox" class="photo-checkbox" value="{{ photo.id }}">
+            </div>
+            <a href="{{ url_for('admin.photo_editor', photo_id=photo.id) }}">
+                <img src="/photos/thumbs/{{ photo.thumb_path }}" alt="" class="photo-thumb">
+            </a>
+            <div class="photo-info">
+                <div class="photo-date">{{ photo.submitted_at[:10] if photo.submitted_at else 'Unknown' }}</div>
+                {% if photo.event_name %}
+                <div class="photo-event">{{ photo.event_name }}</div>
+                {% endif %}
+                <div class="photo-meta">
+                    {{ photo.submitter_name or 'Unknown' }}
+                    {% if photo.face_count %}
+                    &bull; {{ photo.face_count }} face{{ 's' if photo.face_count != 1 else '' }}
+                    {% if photo.unidentified_count %}
+                    <span class="unidentified">({{ photo.unidentified_count }} unknown)</span>
+                    {% endif %}
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+        {% endfor %}
+    </div>
+
+    {% if total > per_page %}
+    <div class="pagination">
+        {% if page > 1 %}
+        <a href="{{ url_for('admin.review_queue', status=status, page=page-1) }}">&laquo; Previous</a>
+        {% endif %}
+        <span>Page {{ page }} of {{ (total // per_page) + (1 if total % per_page else 0) }}</span>
+        {% if page * per_page < total %}
+        <a href="{{ url_for('admin.review_queue', status=status, page=page+1) }}">Next &raquo;</a>
+        {% endif %}
+    </div>
+    {% endif %}
+
+    {% else %}
+    <div class="empty-state">
+        <p>No photos with status "{{ status }}"</p>
+    </div>
+    {% endif %}
+</div>
+
+<script>
+document.getElementById('select-all').addEventListener('change', function() {
+    document.querySelectorAll('.photo-checkbox').forEach(cb => cb.checked = this.checked);
+});
+
+function getSelectedIds() {
+    return Array.from(document.querySelectorAll('.photo-checkbox:checked')).map(cb => cb.value);
+}
+
+function bulkApprove() {
+    const ids = getSelectedIds();
+    if (!ids.length) return alert('Select at least one photo');
+
+    const formData = new FormData();
+    ids.forEach(id => formData.append('photo_ids', id));
+    formData.append('visibility', 'members_only');
+
+    fetch('{{ url_for("admin.bulk_approve") }}', { method: 'POST', body: formData })
+        .then(r => r.json())
+        .then(data => {
+            alert(`Approved ${data.count} photos`);
+            location.reload();
+        });
+}
+
+function bulkReject() {
+    const ids = getSelectedIds();
+    if (!ids.length) return alert('Select at least one photo');
+    if (!confirm(`Reject ${ids.length} photo(s)?`)) return;
+
+    const formData = new FormData();
+    ids.forEach(id => formData.append('photo_ids', id));
+
+    fetch('{{ url_for("admin.bulk_reject") }}', { method: 'POST', body: formData })
+        .then(r => r.json())
+        .then(data => {
+            alert(`Rejected ${data.count} photos`);
+            location.reload();
+        });
+}
+</script>
+{% endblock %}

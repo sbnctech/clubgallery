@@ -1,0 +1,288 @@
+{% extends "admin/base_minimal.html" %}
+
+{% block title %}Webmaster - SBNC Photo Gallery{% endblock %}
+
+{% block content %}
+<div class="webmaster-home">
+    <div class="page-header">
+        <h1>Photo Gallery Administration</h1>
+        <p>Configure the photo gallery and manage site settings.</p>
+    </div>
+
+    <!-- Main Sections -->
+    <div class="section-grid">
+        <!-- Site Configuration -->
+        <div class="section-group">
+            <h2>Site Configuration</h2>
+
+            <a href="{{ url_for('admin.presentation') }}" class="tool-card">
+                <div class="tool-icon">🎨</div>
+                <div class="tool-info">
+                    <h3>Gallery Presentation</h3>
+                    <p>Control what members see: filters, activities, default views, featured events.</p>
+                </div>
+                <span class="arrow">&rarr;</span>
+            </a>
+
+            <a href="{{ url_for('admin.settings') }}" class="tool-card">
+                <div class="tool-icon">⚙️</div>
+                <div class="tool-info">
+                    <h3>Technical Settings</h3>
+                    <p>Gallery display options, CDN libraries, upload limits, face recognition thresholds.</p>
+                </div>
+                <span class="arrow">&rarr;</span>
+            </a>
+
+            <a href="{{ url_for('admin.list_events') }}" class="tool-card">
+                <div class="tool-icon">📅</div>
+                <div class="tool-info">
+                    <h3>Events</h3>
+                    <p>View and manage events synced from Wild Apricot.</p>
+                </div>
+                <span class="arrow">&rarr;</span>
+            </a>
+        </div>
+
+        <!-- Photo Management -->
+        <div class="section-group">
+            <h2>Photo Management</h2>
+
+            <a href="{{ url_for('admin.photos_home') }}" class="tool-card highlight">
+                <div class="tool-icon">📷</div>
+                <div class="tool-info">
+                    <h3>Photo Editor Tools</h3>
+                    <p>Review queue, approve photos, identify faces.</p>
+                </div>
+                {% if stats.awaiting_approval %}
+                <span class="badge">{{ stats.awaiting_approval }} pending</span>
+                {% endif %}
+                <span class="arrow">&rarr;</span>
+            </a>
+
+            <a href="{{ url_for('gallery.gallery_page') }}" target="_blank" class="tool-card">
+                <div class="tool-icon">🖼️</div>
+                <div class="tool-info">
+                    <h3>View Gallery</h3>
+                    <p>See the gallery as members see it.</p>
+                </div>
+                <span class="arrow">&rarr;</span>
+            </a>
+        </div>
+    </div>
+
+    <!-- System Status -->
+    <div class="status-section">
+        <h2>System Status</h2>
+        <div class="status-grid">
+            <div class="status-item">
+                <span class="status-label">Total Photos</span>
+                <span class="status-value">{{ stats.total or 0 }}</span>
+            </div>
+            <div class="status-item">
+                <span class="status-label">Awaiting Review</span>
+                <span class="status-value {% if stats.awaiting_approval %}highlight{% endif %}">
+                    {{ stats.awaiting_approval or 0 }}
+                </span>
+            </div>
+            <div class="status-item">
+                <span class="status-label">Members Only</span>
+                <span class="status-value">{{ stats.members_only or 0 }}</span>
+            </div>
+            <div class="status-item">
+                <span class="status-label">Public</span>
+                <span class="status-value">{{ stats.public or 0 }}</span>
+            </div>
+            <div class="status-item">
+                <span class="status-label">Processing Queue</span>
+                <span class="status-value">{{ stats.queue.pending or 0 }} pending</span>
+            </div>
+            <div class="status-item">
+                <span class="status-label">Config File</span>
+                <span class="status-value ok">OK</span>
+            </div>
+        </div>
+    </div>
+
+    <!-- Quick Links -->
+    <div class="quick-links">
+        <h2>Quick Links</h2>
+        <div class="links-row">
+            <a href="{{ url_for('admin.dashboard') }}" class="quick-link">Full Admin Dashboard</a>
+            <a href="{{ url_for('gallery.upload_page') }}" target="_blank" class="quick-link">Photo Upload Page</a>
+            <a href="{{ url_for('gallery.config_api') }}" target="_blank" class="quick-link">View Config API</a>
+        </div>
+    </div>
+</div>
+
+<style>
+.webmaster-home {
+    max-width: 900px;
+    margin: 0 auto;
+}
+
+.page-header {
+    margin-bottom: 30px;
+}
+
+.page-header h1 {
+    margin: 0 0 8px;
+    color: #333;
+    font-size: 28px;
+}
+
+.page-header p {
+    margin: 0;
+    color: #666;
+    font-size: 16px;
+}
+
+.section-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(350px, 1fr));
+    gap: 30px;
+    margin-bottom: 30px;
+}
+
+.section-group h2 {
+    font-size: 14px;
+    text-transform: uppercase;
+    letter-spacing: 1px;
+    color: #666;
+    margin: 0 0 15px;
+    padding-bottom: 10px;
+    border-bottom: 2px solid #e0e0e0;
+}
+
+.tool-card {
+    display: flex;
+    align-items: center;
+    gap: 15px;
+    background: white;
+    border-radius: 8px;
+    padding: 18px;
+    margin-bottom: 12px;
+    text-decoration: none;
+    color: inherit;
+    box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+    transition: transform 0.15s, box-shadow 0.15s;
+    position: relative;
+}
+
+.tool-card:hover {
+    transform: translateX(4px);
+    box-shadow: 0 2px 8px rgba(0,0,0,0.12);
+}
+
+.tool-card.highlight {
+    border-left: 4px solid #2c5aa0;
+}
+
+.tool-icon {
+    font-size: 28px;
+    width: 45px;
+    text-align: center;
+}
+
+.tool-info {
+    flex: 1;
+}
+
+.tool-info h3 {
+    margin: 0 0 4px;
+    font-size: 16px;
+    color: #333;
+}
+
+.tool-info p {
+    margin: 0;
+    font-size: 13px;
+    color: #666;
+    line-height: 1.4;
+}
+
+.tool-card .arrow {
+    color: #999;
+    font-size: 18px;
+}
+
+.tool-card .badge {
+    position: absolute;
+    top: 12px;
+    right: 40px;
+    background: #e74c3c;
+    color: white;
+    padding: 3px 8px;
+    border-radius: 10px;
+    font-size: 11px;
+    font-weight: 500;
+}
+
+.status-section, .quick-links {
+    background: white;
+    border-radius: 8px;
+    padding: 20px;
+    margin-bottom: 20px;
+    box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+}
+
+.status-section h2, .quick-links h2 {
+    margin: 0 0 15px;
+    font-size: 16px;
+    color: #333;
+}
+
+.status-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(140px, 1fr));
+    gap: 15px;
+}
+
+.status-item {
+    text-align: center;
+    padding: 12px;
+    background: #f8f9fa;
+    border-radius: 5px;
+}
+
+.status-label {
+    display: block;
+    font-size: 12px;
+    color: #666;
+    margin-bottom: 5px;
+}
+
+.status-value {
+    font-size: 18px;
+    font-weight: 600;
+    color: #333;
+}
+
+.status-value.highlight {
+    color: #e74c3c;
+}
+
+.status-value.ok {
+    color: #27ae60;
+}
+
+.links-row {
+    display: flex;
+    gap: 12px;
+    flex-wrap: wrap;
+}
+
+.quick-link {
+    padding: 8px 16px;
+    background: #f0f2f5;
+    border-radius: 5px;
+    text-decoration: none;
+    color: #2c5aa0;
+    font-size: 14px;
+    transition: background 0.15s;
+}
+
+.quick-link:hover {
+    background: #e3e7ed;
+}
+</style>
+{% endblock %}

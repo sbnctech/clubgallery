@@ -1,0 +1,22 @@
+# SBNC Photo Gallery System - Cron Configuration
+# Add these to /etc/cron.d/sbnc-photos or the sbnc user's crontab
+
+# Path setup
+SHELL=/bin/bash
+PATH=/usr/local/bin:/usr/bin:/bin
+PYTHONPATH=/home/sbnc-photos
+
+# Process photo queue every 15 minutes
+*/15 * * * * sbnc cd /home/sbnc-photos && /home/sbnc-photos/venv/bin/python scripts/process_queue.py >> /var/log/sbnc-photos/process.log 2>&1
+
+# Check email every 5 minutes
+*/5 * * * * sbnc cd /home/sbnc-photos && /home/sbnc-photos/venv/bin/python scripts/check_email.py --once >> /var/log/sbnc-photos/email.log 2>&1
+
+# Sync WA members and events daily at 3am
+0 3 * * * sbnc cd /home/sbnc-photos && /home/sbnc-photos/venv/bin/python scripts/sync_wa_data.py >> /var/log/sbnc-photos/sync.log 2>&1
+
+# Backup WA files daily at 4am
+0 4 * * * sbnc cd /home/sbnc-photos && /home/sbnc-photos/venv/bin/python scripts/backup_wa_files.py >> /var/log/sbnc-photos/backup.log 2>&1
+
+# Rebuild face database weekly (Sunday at 2am) to pick up new profile photos
+0 2 * * 0 sbnc cd /home/sbnc-photos && /home/sbnc-photos/venv/bin/python scripts/build_face_database.py >> /var/log/sbnc-photos/faces.log 2>&1
