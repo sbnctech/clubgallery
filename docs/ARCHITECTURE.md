@@ -4,6 +4,26 @@ Photo gallery system for Wild Apricot organizations with AI-powered tagging and 
 
 **Repository:** https://github.com/sbnctech/clubgallery
 
+## Design Principles
+
+- **Easy Maintenance**: Simple architecture with minimal moving parts. SQLite database, straightforward Python/Flask backend, no complex infrastructure
+- **Externalized Configuration**: All customization knobs in `.env` and database settings - no code changes needed for tuning behavior
+- **Rigorous Standards**: Consistent coding patterns, clear separation of concerns, testable components
+- **Read-Only WA Integration**: Never modifies Wild Apricot data - only reads members, events, and registrations
+- **Progressive Automation**: AI handles tedious tasks (face matching, event detection) while humans confirm important decisions
+
+### Configuration Philosophy
+
+Customization should happen through configuration, not code:
+
+| Setting | Location | Purpose |
+|---------|----------|---------|
+| API credentials | `.env` | WA API key, IMAP credentials |
+| Face match thresholds | `.env` | Confidence levels for auto-tagging |
+| Processing options | `.env` | Thumbnail sizes, GPS matching radius |
+| Organization settings | Database | Activity groups, tag categories |
+| Admin permissions | Database | User roles and access levels |
+
 ## System Overview
 
 ```
