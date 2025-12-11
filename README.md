@@ -1,15 +1,25 @@
-# SBNC AI-Powered Photo Gallery System
+# ClubGallery
 
-An AI-powered photo management system for Santa Barbara Newcomers Club that automatically tags photos using face recognition, GPS, and date/time, matches them to events, and provides a searchable gallery.
+Photo gallery widget and management system for Wild Apricot organizations. Features AI-powered tagging, face recognition, event matching, and an embeddable gallery widget.
+
+**Repository:** https://github.com/sbnctech/clubgallery
 
 ## Features
 
-- **Photo Submission**: Accept photos via email (photos@sbnewcomers.org) or web upload
+- **Photo Submission**: Accept photos via email or web upload
 - **AI Processing**: Automatic EXIF extraction, GPS-based event matching, face recognition
-- **Face Recognition**: Match faces to SBNC members, prioritize event RSVPs
+- **Face Recognition**: Match faces to members, prioritize event RSVPs
 - **Admin Review**: Web interface for approving photos and confirming face IDs
-- **Smart Gallery**: nanogallery2-based display with filtering by member, event, activity, year
-- **WA Integration**: Sync members, events, and registrations from Wild Apricot
+- **Gallery Widget**: nanogallery2-based display with filtering by member, event, activity, year
+- **Wild Apricot Integration**: Sync members, events, and registrations
+
+## Requirements
+
+- Python 3.10+
+- SQLite (built-in)
+- System packages:
+  - cmake, boost (for dlib/face_recognition)
+  - exiftool (for EXIF writing)
 
 ## Quick Start
 
@@ -23,9 +33,9 @@ source venv/bin/activate
 # Install Python packages
 pip install -r requirements.txt
 
-# Note: face_recognition requires dlib which needs cmake
-# On Ubuntu: sudo apt install cmake libboost-all-dev
-# On macOS: brew install cmake boost
+# System dependencies
+# Ubuntu: sudo apt install cmake libboost-all-dev libimage-exiftool-perl
+# macOS: brew install cmake boost exiftool
 ```
 
 ### 2. Configure Environment
@@ -68,85 +78,11 @@ Visit:
 - Admin: http://localhost:5000/admin
 - Upload: http://localhost:5000/upload
 
-## Production Deployment
-
-### Server Setup (mail.sbnewcomers.org)
-
-```bash
-# Create user and directory
-sudo useradd -m -s /bin/bash sbnc
-sudo mkdir -p /home/sbnc-photos /var/www/photos /var/log/sbnc-photos
-sudo chown sbnc:sbnc /home/sbnc-photos /var/www/photos /var/log/sbnc-photos
-
-# Clone/copy project
-sudo -u sbnc git clone <repo> /home/sbnc-photos
-# Or: sudo cp -r /path/to/sbnc-photos /home/sbnc-photos
-
-# Setup virtualenv
-sudo -u sbnc python3 -m venv /home/sbnc-photos/venv
-sudo -u sbnc /home/sbnc-photos/venv/bin/pip install -r /home/sbnc-photos/requirements.txt
-```
-
-### Nginx Configuration
-
-```nginx
-server {
-    listen 443 ssl;
-    server_name photos.sbnewcomers.org;
-
-    ssl_certificate /etc/letsencrypt/live/photos.sbnewcomers.org/fullchain.pem;
-    ssl_certificate_key /etc/letsencrypt/live/photos.sbnewcomers.org/privkey.pem;
-
-    location / {
-        proxy_pass http://127.0.0.1:5000;
-        proxy_set_header Host $host;
-        proxy_set_header X-Real-IP $remote_addr;
-    }
-
-    location /photos/ {
-        alias /var/www/photos/;
-        expires 1d;
-    }
-}
-```
-
-### Gunicorn Service
-
-Create `/etc/systemd/system/sbnc-photos.service`:
-
-```ini
-[Unit]
-Description=SBNC Photo Gallery
-After=network.target
-
-[Service]
-User=sbnc
-Group=sbnc
-WorkingDirectory=/home/sbnc-photos
-Environment="PATH=/home/sbnc-photos/venv/bin"
-ExecStart=/home/sbnc-photos/venv/bin/gunicorn -w 4 -b 127.0.0.1:5000 app.main:create_app()
-
-[Install]
-WantedBy=multi-user.target
-```
-
-```bash
-sudo systemctl enable sbnc-photos
-sudo systemctl start sbnc-photos
-```
-
-### Cron Jobs
-
-```bash
-sudo cp cron.example /etc/cron.d/sbnc-photos
-```
-
 ## Project Structure
 
 ```
-sbnc-photos/
+clubgallery/
 ├── app/
-│   ├── __init__.py
 │   ├── config.py              # Configuration
 │   ├── database.py            # SQLite database
 │   ├── main.py                # Flask app factory
@@ -172,12 +108,13 @@ sbnc-photos/
 │   │   └── static/
 │   └── gallery/               # Public gallery
 │       ├── routes.py
+│       ├── static/sbnc-gallery-widget.js
 │       └── templates/
-├── scripts/                   # Cron scripts
-├── data/                      # SQLite database
-├── photos/                    # Photo storage
+├── scripts/                   # Utility scripts
+├── data/                      # SQLite database (gitignored)
+├── photos/                    # Photo storage (gitignored)
 ├── requirements.txt
-└── .env
+└── .env                       # Configuration (gitignored)
 ```
 
 ## Photo Workflow
@@ -191,13 +128,6 @@ sbnc-photos/
 7. **Tag Generation**: Create searchable tags
 8. **Admin Review**: Confirm face IDs, approve for publishing
 9. **Gallery**: Display in public gallery with smart filtering
-
-## Photo Status
-
-- **Awaiting Approval**: New uploads, not visible to members
-- **Members Only**: Approved, visible to logged-in members
-- **Public**: Approved for public/marketing use
-- **Do Not Post**: Rejected or removal requested
 
 ## API Endpoints
 
@@ -213,7 +143,6 @@ sbnc-photos/
 - `GET /admin/photo/<id>` - Photo editor
 - `POST /admin/photo/<id>/face` - Update face ID
 - `POST /admin/photo/<id>/approve` - Approve photo
-- `POST /admin/flash-process` - Trigger processing
 
 ## Configuration
 
@@ -221,26 +150,29 @@ See `.env.example` for all configuration options.
 
 Key settings:
 - `WA_API_KEY` - Wild Apricot API key
+- `WA_ACCOUNT_ID` - Wild Apricot account ID
+- `IMAP_HOST` - Email server for photo submissions
+- `IMAP_USER` - Email account username
 - `IMAP_PASSWORD` - Email account password
 - `FACE_MATCH_HIGH_CONFIDENCE` - Threshold for auto-tagging (default 0.4)
 
-## Troubleshooting
+## Documentation
 
-### Face recognition not working
-- Ensure dlib is installed correctly
-- Run `python scripts/build_face_database.py` to rebuild embeddings
-- Check member profile photos exist in WA
+- [Architecture Overview](docs/ARCHITECTURE.md) - System design and data model
+- [Wild Apricot Embed Instructions](docs/WA-EMBED-INSTRUCTIONS.md) - Embedding the widget
 
-### Photos not matching to events
-- Verify events are synced: `python scripts/sync_wa_data.py`
-- Check photo has GPS data in EXIF
-- Event locations may need geocoding
+## Production Deployment
 
-### Email not processing
-- Verify IMAP credentials in .env
-- Check email server allows IMAP access
-- Review logs: `/var/log/sbnc-photos/email.log`
+See `docs/` for deployment guides:
+
+- Nginx configuration
+- Gunicorn/systemd setup
+- Cron job scheduling
+
+## Related Projects
+
+- [clubcalendar](https://github.com/sbnctech/clubcalendar) - Event calendar widget for Wild Apricot
 
 ## License
 
-Proprietary - Santa Barbara Newcomers Club
+MIT License - see LICENSE file
