@@ -24,6 +24,75 @@ Customization should happen through configuration, not code:
 | Organization settings | Database | Activity groups, tag categories |
 | Admin permissions | Database | User roles and access levels |
 
+## Layered Architecture
+
+The codebase follows a strict three-layer architecture with clear separation of concerns:
+
+```
+┌─────────────────────────────────────────────────────────────────────┐
+│                         UI LAYER                                    │
+│  app/admin/    - Admin dashboard, review queue, photo editor        │
+│  app/gallery/  - Public gallery, embeddable widget                  │
+└─────────────────────────────────────────────────────────────────────┘
+                                 │
+                                 ▼
+┌─────────────────────────────────────────────────────────────────────┐
+│                       SHIM LAYER                                    │
+│  app/ingest/     - Photo intake (email, upload, telegram)           │
+│  app/processing/ - AI pipeline (faces, events, tags)                │
+│  app/sync/       - Wild Apricot integration                         │
+└─────────────────────────────────────────────────────────────────────┘
+                                 │
+                                 ▼
+┌─────────────────────────────────────────────────────────────────────┐
+│                     LIBRARY LAYER                                   │
+│  app/config.py   - Configuration management                         │
+│  app/database.py - SQLite ORM and queries                           │
+│  app/main.py     - Flask app factory                                │
+└─────────────────────────────────────────────────────────────────────┘
+```
+
+### Layer Responsibilities
+
+| Layer | Purpose | Dependencies |
+|-------|---------|--------------|
+| **UI** | User interaction, request handling, templates | Shim layer only |
+| **Shim** | Business logic, external integrations, workflows | Library layer only |
+| **Library** | Core utilities, database, configuration | Python stdlib, external packages |
+
+### Shim Layer - Separation of Function
+
+Each shim module has a single, well-defined responsibility:
+
+**Ingest Shims** (`app/ingest/`)
+| Module | Function |
+|--------|----------|
+| `email_monitor.py` | IMAP inbox scanning, attachment extraction |
+| `upload_handler.py` | Web form uploads, file validation |
+| `telegram_bot.py` | Telegram bot photo submissions |
+| `queue_manager.py` | Processing queue state management |
+
+**Processing Shims** (`app/processing/`)
+| Module | Function |
+|--------|----------|
+| `exif_extractor.py` | Read EXIF metadata from photos |
+| `exif_writer.py` | Write metadata back to photos |
+| `event_matcher.py` | Match photos to events by GPS/date |
+| `face_detector.py` | Detect and recognize faces |
+| `thumbnail_creator.py` | Generate sized thumbnails |
+| `tag_generator.py` | Create searchable tags |
+| `duplicate_detector.py` | Find duplicate photos |
+| `photo_naming.py` | Standardized file naming |
+| `pipeline.py` | Orchestrate processing workflow |
+
+**Sync Shims** (`app/sync/`)
+| Module | Function |
+|--------|----------|
+| `wa_api.py` | Wild Apricot API client wrapper |
+| `member_sync.py` | Sync members, events, registrations |
+| `wa_export.py` | Export data from Wild Apricot |
+| `wa_webdav.py` | WebDAV storage for backups |
+
 ## System Overview
 
 ```
